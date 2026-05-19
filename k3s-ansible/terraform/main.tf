@@ -22,7 +22,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
   datastore_id = "local"
   node_name    = var.proxmox_node
   url          = var.ubuntu_image_url
-  file_name    = "ubuntu-26.04-server-cloudimg-amd64.img"
+  file_name    = "ubuntu-24.04-server-cloudimg-amd64.img"
   overwrite    = false
 }
 

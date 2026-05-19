@@ -35,7 +35,7 @@ variable "ssh_public_key" {
 variable "ubuntu_image_url" {
   description = "URL des Ubuntu 26.04 Cloud-Images"
   type        = string
-  default     = "https://cloud-images.ubuntu.com/releases/26.04/release/ubuntu-26.04-server-cloudimg-amd64.img"
+  default     = "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
 }
 
 variable "network_bridge" {
