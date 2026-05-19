@@ -1,0 +1,24 @@
+# Claude
+.claude/
+
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfvars
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/terraform.tfstate.d/
+
+# Ansible
+**/kubeconfig
+**/*.retry
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo

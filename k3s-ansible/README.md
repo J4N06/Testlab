@@ -12,6 +12,25 @@ Terraform erstellt 3 Ubuntu 24.04 VMs in Proxmox, Ansible installiert darauf ein
 
 ---
 
+## Wichtig — diese Dateien kommen nie ins Git
+
+Folgendes ist in `.gitignore` eingetragen und wird **nicht** ins Repository eingecheckt:
+
+| Datei / Ordner | Inhalt |
+|---|---|
+| `terraform/terraform.tfvars` | Proxmox-Passwort, SSH-Key |
+| `terraform/terraform.tfstate` | Aktueller Infrastruktur-Zustand |
+| `terraform/.terraform/` | Lokale Provider-Binaries |
+| `kubeconfig` | Cluster-Zugangsdaten |
+| `.claude/` | Lokale Claude-Konfiguration |
+
+Vor dem ersten `git push` prüfen:
+```bash
+git status   # terraform.tfvars darf NICHT auftauchen
+```
+
+---
+
 ## Schritt 1 — Tools installieren
 
 ```bash
