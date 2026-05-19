@@ -1,0 +1,27 @@
+# Diese Datei nach terraform.tfvars kopieren und Werte anpassen.
+# terraform.tfvars wird NICHT ins Git eingecheckt (steht in .gitignore).
+
+proxmox_endpoint = "https://192.168.1.100:8006/"
+proxmox_username = "terraform@pve"
+proxmox_password = "DeinProxmoxPasswort"
+proxmox_node     = "pve"
+proxmox_storage  = "local-lvm"
+
+ssh_public_key   = "ssh-ed25519 AAAA... dein@key"
+
+network_bridge   = "vmbr0"
+network_gateway  = "192.168.1.1"
+
+master_ip   = "192.168.1.10/24"
+worker_ips  = ["192.168.1.11/24", "192.168.1.12/24"]
+
+vm_master_id       = 200
+vm_worker_id_start = 201
+
+master_cores     = 2
+master_memory_mb = 4096
+master_disk_gb   = 30
+
+worker_cores     = 2
+worker_memory_mb = 4096
+worker_disk_gb   = 30

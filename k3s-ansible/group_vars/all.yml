@@ -1,0 +1,24 @@
+---
+# k3s Version — "latest" oder z.B. "v1.30.2+k3s1"
+k3s_version: "latest"
+
+# Netzwerk-Interface der VMs (Ubuntu: meist eth0 oder ens18)
+k3s_interface: "eth0"
+
+# Flannel-Backend: vxlan (default), wireguard-native, none (für eigenes CNI)
+k3s_flannel_backend: "vxlan"
+
+# Internes Cluster-Netzwerk (Pods)
+k3s_cluster_cidr: "10.42.0.0/16"
+
+# Service-Netzwerk
+k3s_service_cidr: "10.43.0.0/16"
+
+# Master-IP (muss mit ansible_host des master übereinstimmen)
+k3s_master_ip: "{{ hostvars['master']['ansible_host'] }}"
+
+# API-Server-Port
+k3s_api_port: 6443
+
+# Kubeconfig lokal ablegen (Pfad auf dem Control-Node)
+kubeconfig_local_path: "{{ playbook_dir }}/kubeconfig"

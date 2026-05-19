@@ -1,0 +1,29 @@
+---
+- name: Token vom Master-Node übernehmen
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ hostvars['master']['k3s_node_token'] }}"
+
+- name: Prüfen ob k3s Agent bereits installiert ist
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: k3s Agent installieren
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_VERSION="{{ k3s_version }}" \
+    K3S_URL="https://{{ k3s_master_ip }}:{{ k3s_api_port }}" \
+    K3S_TOKEN="{{ k3s_node_token }}" \
+    sh -s - agent \
+      --node-ip="{{ ansible_host }}" \
+      --node-label="node-role=worker"
+  args:
+    executable: /bin/bash
+  when: not k3s_binary.stat.exists
+  changed_when: true
+
+- name: Warten bis k3s Agent-Service läuft
+  ansible.builtin.systemd:
+    name: k3s-agent
+    state: started
+    enabled: true

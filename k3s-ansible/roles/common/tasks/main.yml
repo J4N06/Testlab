@@ -1,0 +1,56 @@
+---
+- name: System aktualisieren
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: safe
+    cache_valid_time: 3600
+
+- name: Benötigte Pakete installieren
+  ansible.builtin.apt:
+    name:
+      - curl
+      - ca-certificates
+      - open-iscsi   # für Longhorn / iSCSI-Storage
+      - nfs-common   # für NFS-Volumes
+    state: present
+
+- name: Swap deaktivieren (Runtime)
+  ansible.builtin.command: swapoff -a
+  changed_when: false
+
+- name: Swap dauerhaft deaktivieren (fstab)
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^([^#].*\sswap\s.*)$'
+    replace: '#\1'
+
+- name: Kernel-Module laden
+  community.general.modprobe:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - br_netfilter
+    - overlay
+
+- name: Kernel-Module beim Boot laden
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k3s.conf
+    content: |
+      br_netfilter
+      overlay
+    mode: "0644"
+
+- name: Sysctl-Parameter setzen
+  ansible.posix.sysctl:
+    name: "{{ item.key }}"
+    value: "{{ item.value }}"
+    sysctl_file: /etc/sysctl.d/99-k3s.conf
+    reload: true
+  loop:
+    - { key: "net.bridge.bridge-nf-call-iptables", value: "1" }
+    - { key: "net.bridge.bridge-nf-call-ip6tables", value: "1" }
+    - { key: "net.ipv4.ip_forward", value: "1" }
+
+- name: Hostname auf Inventar-Namen setzen
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"

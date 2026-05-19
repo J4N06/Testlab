@@ -1,0 +1,53 @@
+---
+- name: Prüfen ob k3s bereits installiert ist
+  ansible.builtin.stat:
+    path: /usr/local/bin/k3s
+  register: k3s_binary
+
+- name: k3s Server installieren
+  ansible.builtin.shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_VERSION="{{ k3s_version }}" \
+    sh -s - server \
+      --cluster-cidr="{{ k3s_cluster_cidr }}" \
+      --service-cidr="{{ k3s_service_cidr }}" \
+      --flannel-backend="{{ k3s_flannel_backend }}" \
+      --bind-address="{{ k3s_master_ip }}" \
+      --advertise-address="{{ k3s_master_ip }}" \
+      --node-ip="{{ k3s_master_ip }}" \
+      --write-kubeconfig-mode=644 \
+      --disable=traefik \
+      --node-label="node-role=master"
+  args:
+    executable: /bin/bash
+  when: not k3s_binary.stat.exists
+  changed_when: true
+
+- name: Warten bis k3s API erreichbar ist
+  ansible.builtin.wait_for:
+    host: "{{ k3s_master_ip }}"
+    port: "{{ k3s_api_port }}"
+    timeout: 120
+
+- name: k3s Node-Token auslesen
+  ansible.builtin.slurp:
+    src: /var/lib/rancher/k3s/server/node-token
+  register: k3s_token_raw
+
+- name: Token als Fact setzen
+  ansible.builtin.set_fact:
+    k3s_node_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+
+- name: Kubeconfig abrufen
+  ansible.builtin.fetch:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ kubeconfig_local_path }}"
+    flat: true
+
+- name: Kubeconfig — Server-URL auf Master-IP korrigieren
+  ansible.builtin.replace:
+    path: "{{ kubeconfig_local_path }}"
+    regexp: 'https://127\.0\.0\.1:6443'
+    replace: "https://{{ k3s_master_ip }}:{{ k3s_api_port }}"
+  delegate_to: localhost
+  become: false

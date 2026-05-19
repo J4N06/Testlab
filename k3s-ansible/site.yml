@@ -1,0 +1,19 @@
+---
+- name: Alle Nodes vorbereiten
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - common
+
+- name: k3s Master installieren
+  hosts: k3s_master
+  become: true
+  roles:
+    - k3s_master
+
+- name: k3s Worker installieren
+  hosts: k3s_workers
+  become: true
+  roles:
+    - k3s_worker
