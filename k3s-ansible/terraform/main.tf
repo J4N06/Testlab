@@ -13,10 +13,10 @@ provider "proxmox" {
   endpoint = var.proxmox_endpoint
   username = var.proxmox_username
   password = var.proxmox_password
-  insecure = true  # auf false setzen wenn gültiges TLS-Zertifikat vorhanden
+  insecure = true
 }
 
-# ─── Ubuntu 26.04 Cloud-Image herunterladen ───────────────────────────────────
+# ─── Ubuntu 24.04 Cloud-Image herunterladen ───────────────────────────────────
 resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
   content_type = "iso"
   datastore_id = "local"
@@ -26,7 +26,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
   overwrite    = false
 }
 
-# ─── Cloud-Init: SSH-Key + User ───────────────────────────────────────────────
+# ─── Cloud-Init: User + SSH-Key ───────────────────────────────────────────────
 resource "proxmox_virtual_environment_file" "cloud_init_config" {
   content_type = "snippets"
   datastore_id = "local"
@@ -57,6 +57,7 @@ resource "proxmox_virtual_environment_vm" "k3s_master" {
   name      = "k3s-master"
   node_name = var.proxmox_node
   vm_id     = var.vm_master_id
+  started   = true
 
   agent {
     enabled = true
@@ -93,6 +94,9 @@ resource "proxmox_virtual_environment_vm" "k3s_master" {
         gateway = var.network_gateway
       }
     }
+    dns {
+      servers = ["8.8.8.8", "8.8.4.4"]
+    }
     user_data_file_id = proxmox_virtual_environment_file.cloud_init_config.id
   }
 
@@ -107,10 +111,11 @@ resource "proxmox_virtual_environment_vm" "k3s_master" {
 
 # ─── Worker-Nodes (2 Stück) ───────────────────────────────────────────────────
 resource "proxmox_virtual_environment_vm" "k3s_workers" {
-  count     = length(var.worker_ips)
+  count     = 2
   name      = "k3s-worker${count.index + 1}"
   node_name = var.proxmox_node
   vm_id     = var.vm_worker_id_start + count.index
+  started   = true
 
   agent {
     enabled = true
@@ -146,6 +151,9 @@ resource "proxmox_virtual_environment_vm" "k3s_workers" {
         address = var.worker_ips[count.index]
         gateway = var.network_gateway
       }
+    }
+    dns {
+      servers = ["8.8.8.8", "8.8.4.4"]
     }
     user_data_file_id = proxmox_virtual_environment_file.cloud_init_config.id
   }

@@ -33,7 +33,7 @@ variable "ssh_public_key" {
 }
 
 variable "ubuntu_image_url" {
-  description = "URL des Ubuntu 26.04 Cloud-Images"
+  description = "URL des Ubuntu 24.04 Cloud-Images"
   type        = string
   default     = "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
 }
@@ -51,15 +51,15 @@ variable "network_gateway" {
 }
 
 variable "master_ip" {
-  description = "IP des Master-Nodes (CIDR), z.B. 192.168.1.10/24"
+  description = "IP des Master-Nodes (CIDR), z.B. 192.168.2.21/24"
   type        = string
-  default     = "192.168.1.10/24"
+  default     = "192.168.2.21/24"
 }
 
 variable "worker_ips" {
   description = "IPs der Worker-Nodes (CIDR)"
   type        = list(string)
-  default     = ["192.168.1.11/24", "192.168.1.12/24"]
+  default     = ["192.168.2.22/24", "192.168.2.23/24"]
 }
 
 variable "vm_master_id" {
