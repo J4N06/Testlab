@@ -31,7 +31,26 @@ git status   # terraform.tfvars darf NICHT auftauchen
 
 ---
 
-## Schritt 1 — Tools installieren
+## Schritt 1 — Proxmox Enterprise-Repos deaktivieren
+
+Proxmox ist standardmässig auf kostenpflichtige Enterprise-Repos eingestellt. Ohne Lizenz schlägt `apt update` mit 401-Fehlern fehl.
+
+```bash
+# Enterprise-Repos deaktivieren
+sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list
+sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/ceph.list
+
+# Kostenloses No-Subscription-Repo hinzufügen
+echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" \
+  > /etc/apt/sources.list.d/pve-no-subscription.list
+
+# Testen
+apt update
+```
+
+---
+
+## Schritt 2 — Tools installieren
 
 ```bash
 # Git, Ansible, Python
@@ -49,7 +68,7 @@ sudo apt update && sudo apt install -y terraform
 
 ---
 
-## Schritt 2 — Proxmox API-User anlegen
+## Schritt 3 — Proxmox API-User anlegen
 
 ```bash
 pveum user add terraform@pve --password DeinPasswort
@@ -60,7 +79,7 @@ pveum aclmod /storage/local-lvm -user terraform@pve -role PVEDatastoreAdmin
 
 ---
 
-## Schritt 3 — SSH-Key erstellen
+## Schritt 4 — SSH-Key erstellen
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
@@ -69,7 +88,7 @@ cat ~/.ssh/id_ed25519.pub   # diesen Wert später in terraform.tfvars eintragen
 
 ---
 
-## Schritt 4 — Repository clonen
+## Schritt 5 — Repository clonen
 
 ```bash
 git clone https://github.com/DEIN-USER/k3s-ansible.git
@@ -78,7 +97,7 @@ cd k3s-ansible
 
 ---
 
-## Schritt 5 — Terraform konfigurieren
+## Schritt 6 — Terraform konfigurieren
 
 ```bash
 cd terraform/
@@ -101,7 +120,7 @@ Folgende Werte anpassen:
 
 ---
 
-## Schritt 6 — VMs erstellen
+## Schritt 7 — VMs erstellen
 
 ```bash
 terraform init
@@ -113,7 +132,7 @@ Terraform lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB) und erstellt die
 
 ---
 
-## Schritt 7 — Ansible-Inventory befüllen
+## Schritt 8 — Ansible-Inventory befüllen
 
 ```bash
 cd ..
@@ -124,7 +143,7 @@ Die ausgegebenen IPs in `inventory/hosts.yml` eintragen (sind standardmässig be
 
 ---
 
-## Schritt 8 — Verbindung zu den VMs testen
+## Schritt 9 — Verbindung zu den VMs testen
 
 ```bash
 ansible all -m ping
@@ -139,7 +158,7 @@ worker2 | SUCCESS
 
 ---
 
-## Schritt 9 — k3s installieren
+## Schritt 10 — k3s installieren
 
 ```bash
 ansible-playbook site.yml
@@ -149,7 +168,7 @@ Dauert ca. 5–8 Minuten.
 
 ---
 
-## Schritt 10 — Cluster prüfen
+## Schritt 11 — Cluster prüfen
 
 ```bash
 kubectl --kubeconfig=kubeconfig get nodes
