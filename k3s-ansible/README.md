@@ -169,6 +169,14 @@ ansible-playbook site.yml
 
 ## Häufige Fehler
 
+**`ssh ubuntu@192.168.2.21` — Permission denied (publickey)**
+→ SSH-Key wurde nicht als `root` generiert. VMs neu erstellen:
+```bash
+sudo -i
+ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N ""
+bash destroy-vms.sh && bash setup-vms.sh
+```
+
 **`ansible all -m ping` schlägt fehl**
 → SSH-Key nicht eingespielt. Testen:
 ```bash

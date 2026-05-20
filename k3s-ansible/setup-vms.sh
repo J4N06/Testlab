@@ -27,6 +27,15 @@ WORKER1_IP=$(whiptail --title "$TITLE" --inputbox \
 WORKER2_IP=$(whiptail --title "$TITLE" --inputbox \
     "IP Worker 2" 10 50 "192.168.2.23" 3>&1 1>&2 2>&3)
 
+MASTER_NAME=$(whiptail --title "$TITLE" --inputbox \
+    "Name Master-VM" 10 50 "k3s-master" 3>&1 1>&2 2>&3)
+
+WORKER1_NAME=$(whiptail --title "$TITLE" --inputbox \
+    "Name Worker 1" 10 50 "k3s-worker1" 3>&1 1>&2 2>&3)
+
+WORKER2_NAME=$(whiptail --title "$TITLE" --inputbox \
+    "Name Worker 2" 10 50 "k3s-worker2" 3>&1 1>&2 2>&3)
+
 MASTER_CORES=$(whiptail --title "$TITLE" --inputbox \
     "CPU-Kerne Master" 10 50 "2" 3>&1 1>&2 2>&3)
 
@@ -50,23 +59,23 @@ whiptail --title "$TITLE" --yesno \
   Bridge  :  $BRIDGE
   Gateway :  $GATEWAY
 
-  Master  :  $MASTER_IP  ($MASTER_CORES vCPU, ${MASTER_MEM} MB, $DISK_SIZE)
-  Worker1 :  $WORKER1_IP ($WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE)
-  Worker2 :  $WORKER2_IP ($WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE)
+  Master  :  $MASTER_NAME ($MASTER_IP)  $MASTER_CORES vCPU, ${MASTER_MEM} MB, $DISK_SIZE
+  Worker1 :  $WORKER1_NAME ($WORKER1_IP) $WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE
+  Worker2 :  $WORKER2_NAME ($WORKER2_IP) $WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE
 
-Jetzt starten?" 20 55
+Jetzt starten?" 20 60
 
 # ─── Fixe Werte ───────────────────────────────────────────────────────────────
 IMAGE_STORAGE="local"
 IMAGE_URL="https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
 IMAGE_PATH="/var/lib/vz/template/iso/ubuntu-24.04-cloudimg.img"
-SSH_KEY_FILE="/root/.ssh/id_ed25519.pub"
+SSH_KEY_FILE="$HOME/.ssh/id_ed25519.pub"
 CI_USER="ubuntu"
 
 MASTER_ID=200
 WORKER_IDS=(201 202)
 WORKER_IPS=("$WORKER1_IP" "$WORKER2_IP")
-WORKER_NAMES=("k3s-worker1" "k3s-worker2")
+WORKER_NAMES=("$WORKER1_NAME" "$WORKER2_NAME")
 
 # ─── Cloud-Image herunterladen ────────────────────────────────────────────────
 if [ ! -f "$IMAGE_PATH" ]; then
@@ -121,7 +130,7 @@ create_vm() {
     echo ">>> VM $ID ($NAME) gestartet."
 }
 
-create_vm "$MASTER_ID" "k3s-master" "$MASTER_IP" "$MASTER_CORES" "$MASTER_MEM"
+create_vm "$MASTER_ID" "$MASTER_NAME" "$MASTER_IP" "$MASTER_CORES" "$MASTER_MEM"
 
 for i in "${!WORKER_IDS[@]}"; do
     create_vm "${WORKER_IDS[$i]}" "${WORKER_NAMES[$i]}" "${WORKER_IPS[$i]}" "$WORKER_CORES" "$WORKER_MEM"
