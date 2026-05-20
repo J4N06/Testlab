@@ -28,13 +28,40 @@ git status   # kubeconfig darf NICHT auftauchen
 
 ## Schritt 1 — Proxmox Enterprise-Repos deaktivieren
 
-Ohne Lizenz schlägt `apt update` mit 401-Fehlern fehl.
+Ohne Lizenz schlägt `apt update` mit 401-Fehlern fehl. Proxmox verwendet das neuere `.sources`-Format:
 
 ```bash
-sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/pve-enterprise.list
-sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/ceph.list
+# Enterprise-Repos deaktivieren
+cat > /etc/apt/sources.list.d/pve-enterprise.sources << 'EOF'
+Types: deb
+URIs: https://enterprise.proxmox.com/debian/ceph-squid
+Suites: trixie
+Components: enterprise
+Enabled: no
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+
+Types: deb
+URIs: https://enterprise.proxmox.com/debian/pve
+Suites: trixie
+Components: pve-enterprise
+Enabled: no
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+cat > /etc/apt/sources.list.d/ceph.sources << 'EOF'
+Types: deb
+URIs: https://enterprise.proxmox.com/debian/ceph-squid
+Suites: trixie
+Components: enterprise
+Enabled: no
+Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+EOF
+
+# Kostenloses No-Subscription-Repo hinzufügen
 echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" \
   > /etc/apt/sources.list.d/pve-no-subscription.list
+
+# Testen
 apt update
 ```
 
@@ -52,10 +79,14 @@ ansible-galaxy collection install community.general ansible.posix
 
 ---
 
-## Schritt 3 — SSH-Key erstellen
+## Schritt 3 — Projekt-SSH-Key erstellen
+
+Ein dedizierter Key für dieses Projekt — unabhängig vom Linux-User.
+`k3s_key` bleibt lokal (gitignore), `k3s_key.pub` kommt ins Repo.
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N ""
+cd Testlab/k3s-ansible
+ssh-keygen -t ed25519 -f k3s_key -N ""
 ```
 
 ---

@@ -69,7 +69,7 @@ Jetzt starten?" 20 60
 IMAGE_STORAGE="local"
 IMAGE_URL="https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
 IMAGE_PATH="/var/lib/vz/template/iso/ubuntu-24.04-cloudimg.img"
-SSH_KEY_FILE="$HOME/.ssh/id_ed25519.pub"
+SSH_KEY_FILE="$(dirname "$0")/k3s_key.pub"
 CI_USER="ubuntu"
 
 MASTER_ID=200

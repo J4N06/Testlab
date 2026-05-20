@@ -4,6 +4,7 @@
 # Ansible
 **/kubeconfig
 **/*.retry
+**/k3s_key
 
 # OS
 .DS_Store
