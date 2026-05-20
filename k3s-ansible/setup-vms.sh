@@ -28,13 +28,13 @@ WORKER2_IP=$(whiptail --title "$TITLE" --inputbox \
     "IP Worker 2" 10 50 "192.168.2.23" 3>&1 1>&2 2>&3)
 
 MASTER_NAME=$(whiptail --title "$TITLE" --inputbox \
-    "Name Master-VM" 10 50 "k3s-master" 3>&1 1>&2 2>&3)
+    "Name Master-VM" 10 50 "master" 3>&1 1>&2 2>&3)
 
 WORKER1_NAME=$(whiptail --title "$TITLE" --inputbox \
-    "Name Worker 1" 10 50 "k3s-worker1" 3>&1 1>&2 2>&3)
+    "Name Worker 1" 10 50 "worker1" 3>&1 1>&2 2>&3)
 
 WORKER2_NAME=$(whiptail --title "$TITLE" --inputbox \
-    "Name Worker 2" 10 50 "k3s-worker2" 3>&1 1>&2 2>&3)
+    "Name Worker 2" 10 50 "worker2" 3>&1 1>&2 2>&3)
 
 MASTER_CORES=$(whiptail --title "$TITLE" --inputbox \
     "CPU-Kerne Master" 10 50 "2" 3>&1 1>&2 2>&3)
@@ -70,7 +70,16 @@ IMAGE_STORAGE="local"
 IMAGE_URL="https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
 IMAGE_PATH="/var/lib/vz/template/iso/ubuntu-24.04-cloudimg.img"
 SSH_KEY_FILE="$(dirname "$0")/k3s_key.pub"
+TEAM_KEYS_FILE="$(dirname "$0")/team_keys.pub"
 CI_USER="ubuntu"
+
+# ─── SSH-Keys zusammenführen ─────────────────────────────────────────────────
+COMBINED_KEYS=$(mktemp)
+cat "$SSH_KEY_FILE" > "$COMBINED_KEYS"
+if [ -f "$TEAM_KEYS_FILE" ] && [ -s "$TEAM_KEYS_FILE" ]; then
+    cat "$TEAM_KEYS_FILE" >> "$COMBINED_KEYS"
+fi
+trap 'rm -f "$COMBINED_KEYS"' EXIT
 
 MASTER_ID=200
 WORKER_IDS=(201 202)
@@ -122,7 +131,7 @@ create_vm() {
 
     qm set "$ID" \
         --ciuser "$CI_USER" \
-        --sshkey "$SSH_KEY_FILE" \
+        --sshkey "$COMBINED_KEYS" \
         --ipconfig0 "ip=$IP/24,gw=$GATEWAY" \
         --nameserver "8.8.8.8"
 

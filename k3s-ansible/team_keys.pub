@@ -1,0 +1,6 @@
+# Hier einen Public Key pro Zeile eintragen.
+# Jeder eingetragene Key bekommt SSH-Zugang zu den VMs (als ubuntu-User).
+# Format: ssh-ed25519 AAAA... user@host
+#
+# Beispiel:
+# ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... jan@laptop
