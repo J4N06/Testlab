@@ -1,14 +1,6 @@
 # Claude
 .claude
 
-# Terraform
-**/.terraform/
-**/.terraform.lock.hcl
-**/terraform.tfvars
-**/terraform.tfstate
-**/terraform.tfstate.backup
-**/terraform.tfstate.d/
-
 # Ansible
 **/kubeconfig
 **/*.retry
