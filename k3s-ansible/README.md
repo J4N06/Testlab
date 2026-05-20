@@ -79,7 +79,17 @@ ansible-galaxy collection install community.general ansible.posix
 
 ---
 
-## Schritt 3 — Projekt-SSH-Key erstellen
+
+---
+
+## Schritt 3 — Repository clonen
+
+```bash
+git clone https://github.com/J4N06/Testlab.git
+cd Testlab/k3s-ansible
+```
+
+## Schritt 4 — Projekt-SSH-Key erstellen
 
 Ein dedizierter Key für dieses Projekt — unabhängig vom Linux-User.
 `k3s_key` bleibt lokal (gitignore), `k3s_key.pub` kommt ins Repo.
@@ -87,15 +97,6 @@ Ein dedizierter Key für dieses Projekt — unabhängig vom Linux-User.
 ```bash
 cd Testlab/k3s-ansible
 ssh-keygen -t ed25519 -f k3s_key -N ""
-```
-
----
-
-## Schritt 4 — Repository clonen
-
-```bash
-git clone https://github.com/J4N06/Testlab.git
-cd Testlab/k3s-ansible
 ```
 
 ---
