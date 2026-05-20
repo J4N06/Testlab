@@ -21,6 +21,11 @@ variable "proxmox_node" {
   default     = "pve"
 }
 
+variable "proxmox_ssh_host" {
+  description = "IP des Proxmox-Hosts für SSH (für Datei-Operationen)"
+  type        = string
+}
+
 variable "proxmox_storage" {
   description = "Storage-Pool für VM-Disks (local-lvm, local-zfs, ...)"
   type        = string

@@ -14,10 +14,20 @@ provider "proxmox" {
   username = var.proxmox_username
   password = var.proxmox_password
   insecure = true
+
+  ssh {
+    agent       = false
+    username    = "root"
+    private_key = file("~/.ssh/id_ed25519")
+    node {
+      name    = var.proxmox_node
+      address = var.proxmox_ssh_host
+    }
+  }
 }
 
 # ─── Ubuntu 24.04 Cloud-Image herunterladen ───────────────────────────────────
-resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
+resource "proxmox_download_file" "ubuntu_cloud_image" {
   content_type = "iso"
   datastore_id = "local"
   node_name    = var.proxmox_node
@@ -74,7 +84,7 @@ resource "proxmox_virtual_environment_vm" "k3s_master" {
 
   disk {
     datastore_id = var.proxmox_storage
-    file_id      = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+    file_id      = proxmox_download_file.ubuntu_cloud_image.id
     interface    = "virtio0"
     iothread     = true
     size         = var.master_disk_gb
@@ -132,7 +142,7 @@ resource "proxmox_virtual_environment_vm" "k3s_workers" {
 
   disk {
     datastore_id = var.proxmox_storage
-    file_id      = proxmox_virtual_environment_download_file.ubuntu_cloud_image.id
+    file_id      = proxmox_download_file.ubuntu_cloud_image.id
     interface    = "virtio0"
     iothread     = true
     size         = var.worker_disk_gb

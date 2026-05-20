@@ -71,7 +71,7 @@ sudo apt update && sudo apt install -y terraform
 ## Schritt 3 — Proxmox API-User anlegen
 
 ```bash
-pveum user add terraform@pve --password DeinPasswort
+pveum user add terraform@pve --password 'DeinPasswort'
 pveum aclmod / -user terraform@pve -role PVEVMAdmin
 pveum aclmod /storage/local -user terraform@pve -role PVEDatastoreAdmin
 pveum aclmod /storage/local-lvm -user terraform@pve -role PVEDatastoreAdmin
@@ -91,8 +91,8 @@ cat ~/.ssh/id_ed25519.pub   # diesen Wert später in terraform.tfvars eintragen
 ## Schritt 5 — Repository clonen
 
 ```bash
-git clone https://github.com/DEIN-USER/k3s-ansible.git
-cd k3s-ansible
+git clone https://github.com/J4N06/Testlab.git
+cd Testlab/k3s-ansible
 ```
 
 ---
@@ -100,9 +100,10 @@ cd k3s-ansible
 ## Schritt 6 — Terraform konfigurieren
 
 ```bash
-cd terraform/
+cd terraform
 cp terraform.tfvars.example terraform.tfvars
 nano terraform.tfvars
+# Hinweis: du bist jetzt in Testlab/k3s-ansible/terraform/
 ```
 
 Folgende Werte anpassen:
