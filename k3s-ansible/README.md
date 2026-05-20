@@ -69,41 +69,28 @@ cd Testlab/k3s-ansible
 
 ---
 
-## Schritt 5 — Skript konfigurieren
-
-```bash
-nano setup-vms.sh
-```
-
-Folgende Werte oben im Skript anpassen:
-
-| Variable | Beschreibung | Standard |
-|---|---|---|
-| `STORAGE` | Storage für VM-Disks | `local-lvm` |
-| `BRIDGE` | Netzwerk-Bridge | `vmbr0` |
-| `GATEWAY` | Standard-Gateway | `192.168.2.1` |
-| `MASTER_IP` | IP Master-Node | `192.168.2.21` |
-| `WORKER_IPS` | IPs Worker-Nodes | `192.168.2.22 / .23` |
-
----
-
-## Schritt 6 — VMs erstellen
+## Schritt 5 — VMs erstellen
 
 ```bash
 bash setup-vms.sh
 ```
 
-Das Skript lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB) und erstellt die 3 VMs automatisch. Dauert ca. 3–5 Minuten.
+Das Skript fragt alle Parameter interaktiv ab (mit Standardwerten):
 
----
-
-## Schritt 7 — Ansible-Inventory prüfen
-
-IPs in `inventory/hosts.yml` kontrollieren — sind standardmässig auf 192.168.2.21–23 gesetzt.
-
-```bash
-cat inventory/hosts.yml
 ```
+Storage für VM-Disks  [local-lvm]:
+Netzwerk-Bridge       [vmbr0]:
+Standard-Gateway      [192.168.2.1]:
+IP Master-Node        [192.168.2.21]:
+IP Worker 1           [192.168.2.22]:
+IP Worker 2           [192.168.2.23]:
+CPU-Kerne Master      [2]:
+RAM Master (MB)       [4096]:
+...
+Starten? [j/N]: j
+```
+
+Danach lädt es das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 VMs und aktualisiert `inventory/hosts.yml` automatisch. Dauert ca. 3–5 Minuten.
 
 ---
 
