@@ -1,50 +1,60 @@
 #!/bin/bash
 set -e
 
-# ─── Hilfsfunktion: Eingabe mit Standardwert ──────────────────────────────────
-ask() {
-    local prompt=$1
-    local default=$2
-    local var
-    read -rp "$prompt [$default]: " var
-    echo "${var:-$default}"
-}
+# ─── whiptail prüfen ──────────────────────────────────────────────────────────
+if ! command -v whiptail &>/dev/null; then
+    apt-get install -y whiptail
+fi
 
-echo ""
-echo "╔══════════════════════════════════════╗"
-echo "║     k3s VM Setup für Proxmox         ║"
-echo "╚══════════════════════════════════════╝"
-echo ""
+TITLE="k3s VM Setup für Proxmox"
 
 # ─── Parameter abfragen ───────────────────────────────────────────────────────
-STORAGE=$(ask    "Storage für VM-Disks     (local-lvm / local-zfs)" "local-lvm")
-BRIDGE=$(ask     "Netzwerk-Bridge                                  " "vmbr0")
-GATEWAY=$(ask    "Standard-Gateway                                 " "192.168.2.1")
+STORAGE=$(whiptail --title "$TITLE" --inputbox \
+    "Storage für VM-Disks\n(z.B. local-lvm, local-zfs)" 10 50 "local-lvm" 3>&1 1>&2 2>&3)
 
-echo ""
-MASTER_IP=$(ask  "IP Master-Node                                   " "192.168.2.21")
-WORKER1_IP=$(ask "IP Worker 1                                      " "192.168.2.22")
-WORKER2_IP=$(ask "IP Worker 2                                      " "192.168.2.23")
+BRIDGE=$(whiptail --title "$TITLE" --inputbox \
+    "Netzwerk-Bridge" 10 50 "vmbr0" 3>&1 1>&2 2>&3)
 
-echo ""
-MASTER_CORES=$(ask  "CPU-Kerne Master                              " "2")
-MASTER_MEM=$(ask    "RAM Master (MB)                               " "4096")
-WORKER_CORES=$(ask  "CPU-Kerne Worker                              " "2")
-WORKER_MEM=$(ask    "RAM Worker (MB)                               " "4096")
-DISK_SIZE=$(ask     "Disk-Grösse pro VM                            " "30G")
+GATEWAY=$(whiptail --title "$TITLE" --inputbox \
+    "Standard-Gateway" 10 50 "192.168.2.1" 3>&1 1>&2 2>&3)
 
-echo ""
-echo "──────────────────────────────────────────"
-echo "Zusammenfassung:"
-echo "  Storage:   $STORAGE | Bridge: $BRIDGE | Gateway: $GATEWAY"
-echo "  Master:    $MASTER_IP  ($MASTER_CORES vCPU, ${MASTER_MEM}MB RAM)"
-echo "  Worker 1:  $WORKER1_IP ($WORKER_CORES vCPU, ${WORKER_MEM}MB RAM)"
-echo "  Worker 2:  $WORKER2_IP ($WORKER_CORES vCPU, ${WORKER_MEM}MB RAM)"
-echo "  Disk:      $DISK_SIZE pro VM"
-echo "──────────────────────────────────────────"
-echo ""
-read -rp "Starten? [j/N]: " confirm
-[[ "${confirm,,}" != "j" ]] && echo "Abgebrochen." && exit 0
+MASTER_IP=$(whiptail --title "$TITLE" --inputbox \
+    "IP Master-Node" 10 50 "192.168.2.21" 3>&1 1>&2 2>&3)
+
+WORKER1_IP=$(whiptail --title "$TITLE" --inputbox \
+    "IP Worker 1" 10 50 "192.168.2.22" 3>&1 1>&2 2>&3)
+
+WORKER2_IP=$(whiptail --title "$TITLE" --inputbox \
+    "IP Worker 2" 10 50 "192.168.2.23" 3>&1 1>&2 2>&3)
+
+MASTER_CORES=$(whiptail --title "$TITLE" --inputbox \
+    "CPU-Kerne Master" 10 50 "2" 3>&1 1>&2 2>&3)
+
+MASTER_MEM=$(whiptail --title "$TITLE" --inputbox \
+    "RAM Master (MB)" 10 50 "4096" 3>&1 1>&2 2>&3)
+
+WORKER_CORES=$(whiptail --title "$TITLE" --inputbox \
+    "CPU-Kerne Worker" 10 50 "2" 3>&1 1>&2 2>&3)
+
+WORKER_MEM=$(whiptail --title "$TITLE" --inputbox \
+    "RAM Worker (MB)" 10 50 "4096" 3>&1 1>&2 2>&3)
+
+DISK_SIZE=$(whiptail --title "$TITLE" --inputbox \
+    "Disk-Grösse pro VM" 10 50 "30G" 3>&1 1>&2 2>&3)
+
+# ─── Zusammenfassung + Bestätigung ───────────────────────────────────────────
+whiptail --title "$TITLE" --yesno \
+"Zusammenfassung — bitte prüfen:
+
+  Storage :  $STORAGE
+  Bridge  :  $BRIDGE
+  Gateway :  $GATEWAY
+
+  Master  :  $MASTER_IP  ($MASTER_CORES vCPU, ${MASTER_MEM} MB, $DISK_SIZE)
+  Worker1 :  $WORKER1_IP ($WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE)
+  Worker2 :  $WORKER2_IP ($WORKER_CORES vCPU, ${WORKER_MEM} MB, $DISK_SIZE)
+
+Jetzt starten?" 20 55
 
 # ─── Fixe Werte ───────────────────────────────────────────────────────────────
 IMAGE_STORAGE="local"
@@ -60,7 +70,6 @@ WORKER_NAMES=("k3s-worker1" "k3s-worker2")
 
 # ─── Cloud-Image herunterladen ────────────────────────────────────────────────
 if [ ! -f "$IMAGE_PATH" ]; then
-    echo ""
     echo ">>> Cloud-Image wird heruntergeladen..."
     wget -q --show-progress -O "$IMAGE_PATH" "$IMAGE_URL"
 else
@@ -95,7 +104,7 @@ create_vm() {
     qm set "$ID" \
         --scsihw virtio-scsi-pci \
         --scsi0 "$STORAGE:vm-$ID-disk-0,discard=on,iothread=1" \
-        --ide2 "$IMAGE_STORAGE:cloudinit" \
+        --ide2 "$STORAGE:cloudinit" \
         --boot order=scsi0 \
         --serial0 socket \
         --vga serial0
@@ -112,7 +121,6 @@ create_vm() {
     echo ">>> VM $ID ($NAME) gestartet."
 }
 
-echo ""
 create_vm "$MASTER_ID" "k3s-master" "$MASTER_IP" "$MASTER_CORES" "$MASTER_MEM"
 
 for i in "${!WORKER_IDS[@]}"; do
@@ -121,10 +129,7 @@ done
 
 # ─── Ansible-Inventory automatisch aktualisieren ─────────────────────────────
 INVENTORY="$(dirname "$0")/inventory/hosts.yml"
-if [ -f "$INVENTORY" ]; then
-    echo ""
-    echo ">>> Ansible-Inventory wird aktualisiert..."
-    cat > "$INVENTORY" <<EOF
+cat > "$INVENTORY" <<EOF
 ---
 all:
   children:
@@ -143,12 +148,12 @@ all:
           ansible_host: $WORKER2_IP
           ansible_user: $CI_USER
 EOF
-    echo ">>> inventory/hosts.yml aktualisiert."
-fi
 
-echo ""
-echo "✓ Alle VMs erstellt."
-echo ""
-echo "Warte ~60 Sekunden bis cloud-init fertig ist, dann:"
-echo "  ansible all -m ping"
-echo "  ansible-playbook site.yml"
+whiptail --title "$TITLE" --msgbox \
+"✓ Alle VMs erstellt!
+
+Warte ~60 Sekunden bis cloud-init fertig ist.
+
+Dann weiter mit:
+  ansible all -m ping
+  ansible-playbook site.yml" 15 50
