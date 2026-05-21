@@ -16,6 +16,11 @@ provider "proxmox" {
   endpoint  = var.proxmox_url
   api_token = var.proxmox_api_token
   insecure  = true
+
+  ssh {
+    username    = "root"
+    private_key = file("/root/.ssh/id_ed25519")
+  }
 }
 
 locals {
