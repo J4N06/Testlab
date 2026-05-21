@@ -1,7 +1,7 @@
 ---
 - name: Token vom Master-Node übernehmen
   ansible.builtin.set_fact:
-    k3s_node_token: "{{ hostvars['master']['k3s_node_token'] }}"
+    k3s_node_token: "{{ hostvars[groups['k3s_master'][0]]['k3s_node_token'] }}"
 
 - name: Prüfen ob k3s Agent bereits installiert ist
   ansible.builtin.stat:

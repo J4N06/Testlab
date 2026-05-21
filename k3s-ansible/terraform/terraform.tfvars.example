@@ -1,0 +1,24 @@
+# Kopieren nach terraform.tfvars und anpassen (kommt nicht ins Git!)
+#
+# API-Token erstellen:
+#   Proxmox Web-UI → Datacenter → API Tokens → Add
+#   User: root@pam, Token ID: terraform, Privilege Separation: nein
+#   Den angezeigten Secret-Wert kopieren — er wird nur einmal angezeigt!
+
+proxmox_url       = "https://192.168.2.10:8006"
+proxmox_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_node      = "pve"
+
+# Optional — Standardwerte können weggelassen werden
+# storage       = "local-lvm"
+# bridge        = "vmbr0"
+# gateway       = "192.168.2.1"
+# master_name   = "master"
+# master_ip     = "192.168.2.21"
+# master_cores  = 2
+# master_memory = 4096
+# worker_names  = ["worker1", "worker2"]
+# worker_ips    = ["192.168.2.22", "192.168.2.23"]
+# worker_cores  = 2
+# worker_memory = 4096
+# disk_size     = 30

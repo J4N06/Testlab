@@ -1,13 +1,13 @@
 # k3s auf Proxmox — Automatisches Setup
 
-Ein Bash-Skript erstellt 3 Ubuntu 24.04 VMs in Proxmox, Ansible installiert darauf einen k3s-Cluster (1 Master, 2 Worker).
+Terraform erstellt 3 Ubuntu 24.04 VMs in Proxmox, Ansible installiert darauf einen k3s-Cluster (1 Master, 2 Worker).
 
 ---
 
 ## Voraussetzungen
 
 - Proxmox VE läuft auf dem Server
-- Server hat Internetzugang (für Cloud-Image-Download)
+- Server hat Internetzugang
 - Alle Befehle werden in der **Proxmox-Shell** ausgeführt (Web-UI → Node → Shell) als `root`
 
 ---
@@ -16,22 +16,17 @@ Ein Bash-Skript erstellt 3 Ubuntu 24.04 VMs in Proxmox, Ansible installiert dara
 
 | Datei | Inhalt |
 |---|---|
+| `terraform/terraform.tfvars` | Proxmox API-Token |
 | `kubeconfig` | Cluster-Zugangsdaten |
-| `.claude/` | Lokale Claude-Konfiguration |
-
-Vor dem ersten `git push` prüfen:
-```bash
-git status   # kubeconfig darf NICHT auftauchen
-```
+| `k3s_key` | Privater SSH-Key |
 
 ---
 
 ## Schritt 1 — Proxmox Enterprise-Repos deaktivieren
 
-Ohne Lizenz schlägt `apt update` mit 401-Fehlern fehl. Proxmox verwendet das neuere `.sources`-Format:
+Ohne Lizenz schlägt `apt update` mit 401-Fehlern fehl:
 
 ```bash
-# Enterprise-Repos deaktivieren
 cat > /etc/apt/sources.list.d/pve-enterprise.sources << 'EOF'
 Types: deb
 URIs: https://enterprise.proxmox.com/debian/ceph-squid
@@ -57,11 +52,9 @@ Enabled: no
 Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
 EOF
 
-# Kostenloses No-Subscription-Repo hinzufügen
 echo "deb http://download.proxmox.com/debian/pve trixie pve-no-subscription" \
   > /etc/apt/sources.list.d/pve-no-subscription.list
 
-# Testen
 apt update
 ```
 
@@ -71,14 +64,16 @@ apt update
 
 ```bash
 # Git, Ansible, Python
-apt install -y git ansible python3-pip curl
+apt install -y git ansible python3-pip curl unzip
 
 # Ansible Collections
 ansible-galaxy collection install community.general ansible.posix
+
+# Terraform
+TERRAFORM_VERSION="1.9.8"
+wget -q -O terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
+unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip
 ```
-
----
-
 
 ---
 
@@ -89,59 +84,76 @@ git clone https://github.com/J4N06/Testlab.git
 cd Testlab/k3s-ansible
 ```
 
+---
+
 ## Schritt 4 — Projekt-SSH-Key erstellen
 
-Ein dedizierter Key für dieses Projekt — unabhängig vom Linux-User.
-`k3s_key` bleibt lokal (gitignore), `k3s_key.pub` kommt ins Repo.
-
 ```bash
-cd Testlab/k3s-ansible
 ssh-keygen -t ed25519 -f k3s_key -N ""
+git add k3s_key.pub
+git commit -m "add: projekt ssh public key"
+git push
 ```
 
 ### Weitere Benutzer hinzufügen (optional)
 
-Damit mehrere Personen per SSH auf die VMs zugreifen können, Public Keys in `team_keys.pub` eintragen (eine Zeile pro Key) und committen:
+Public Keys in `team_keys.pub` eintragen (eine Zeile pro Key) und committen:
 
 ```
 ssh-ed25519 AAAAC3... jan@laptop
 ssh-ed25519 AAAAC3... lisa@pc
 ```
 
-Diese Keys werden beim nächsten `bash setup-vms.sh` automatisch auf alle VMs verteilt.
+---
+
+## Schritt 5 — Proxmox API-Token erstellen
+
+Proxmox Web-UI → **Datacenter → API Tokens → Add**
+
+| Feld | Wert |
+|---|---|
+| User | `root@pam` |
+| Token ID | `terraform` |
+| Privilege Separation | **nein** |
+
+Den angezeigten Secret-Wert kopieren — er wird nur **einmal** angezeigt.
 
 ---
 
-## Schritt 5 — VMs erstellen
+## Schritt 6 — Terraform konfigurieren
 
 ```bash
-bash setup-vms.sh
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
 ```
 
-Das Skript fragt alle Parameter interaktiv ab (mit Standardwerten):
+`terraform.tfvars` bearbeiten:
 
+```hcl
+proxmox_url       = "https://192.168.2.10:8006"   # IP deines Proxmox-Hosts
+proxmox_api_token = "root@pam!terraform=dein-secret"
+proxmox_node      = "pve"                          # Node-Name (oben links im Web-UI)
 ```
-Storage für VM-Disks  [local-lvm]:
-Netzwerk-Bridge       [vmbr0]:
-Standard-Gateway      [192.168.2.1]:
-IP Master-Node        [192.168.2.21]:
-IP Worker 1           [192.168.2.22]:
-IP Worker 2           [192.168.2.23]:
-CPU-Kerne Master      [2]:
-RAM Master (MB)       [4096]:
-...
-Starten? [j/N]: j
-```
-
-Danach lädt es das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 VMs und aktualisiert `inventory/hosts.yml` automatisch. Dauert ca. 3–5 Minuten.
 
 ---
 
-## Schritt 8 — Verbindung zu den VMs testen
+## Schritt 7 — VMs erstellen
+
+```bash
+terraform init
+terraform apply
+```
+
+Terraform lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 VMs und schreibt `inventory/hosts.yml` automatisch.
+
+---
+
+## Schritt 8 — Verbindung testen
 
 ~60 Sekunden warten bis cloud-init fertig ist, dann:
 
 ```bash
+cd ..
 ansible all -m ping
 ```
 
@@ -167,15 +179,15 @@ Dauert ca. 5–8 Minuten.
 ## Schritt 10 — Cluster prüfen
 
 ```bash
-kubectl --kubeconfig=kubeconfig get nodes
+ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl get nodes"
 ```
 
 Erwartete Ausgabe:
 ```
-NAME      STATUS   ROLES                  AGE   VERSION
-master    Ready    control-plane,master   2m    v1.30.x+k3s1
-worker1   Ready    <none>                 1m    v1.30.x+k3s1
-worker2   Ready    <none>                 1m    v1.30.x+k3s1
+NAME      STATUS   ROLES           AGE   VERSION
+master    Ready    control-plane   2m    v1.35.x+k3s1
+worker1   Ready    <none>          1m    v1.35.x+k3s1
+worker2   Ready    <none>          1m    v1.35.x+k3s1
 ```
 
 ---
@@ -183,21 +195,19 @@ worker2   Ready    <none>                 1m    v1.30.x+k3s1
 ## VMs löschen und neu aufsetzen (Reset)
 
 ```bash
+cd terraform
+
 # VMs löschen
-bash destroy-vms.sh
+terraform destroy
 
-# Alte kubeconfig entfernen
-rm -f kubeconfig
-
-# VMs neu erstellen (Cloud-Image bereits vorhanden — dauert ~2 Min.)
-bash setup-vms.sh
+# VMs neu erstellen
+terraform apply
 
 # ~60 Sekunden warten, dann k3s neu installieren
+cd ..
 ansible all -m ping
 ansible-playbook site.yml
 ```
-
-> Der k3s-Node-Token wird bei jeder Neuinstallation neu generiert. Die `kubeconfig` wird durch Ansible automatisch neu erstellt.
 
 ---
 
@@ -213,8 +223,10 @@ ansible-playbook site.yml
 ## Häufige Fehler
 
 **`ssh ubuntu@192.168.2.21` — Permission denied (publickey)**
-→ Projekt-Key angeben: `ssh -i k3s_key ubuntu@192.168.2.21`
-→ Falls Key noch nicht generiert: `ssh-keygen -t ed25519 -f k3s_key -N ""` dann VMs neu erstellen.
+→ Projekt-Key angeben:
+```bash
+ssh -i k3s_key ubuntu@192.168.2.21
+```
 
 **`ansible all -m ping` schlägt fehl**
 → Verbindung manuell testen:
@@ -222,5 +234,8 @@ ansible-playbook site.yml
 ssh -i k3s_key ubuntu@192.168.2.21
 ```
 
+**`terraform apply` — 401 Unauthorized**
+→ API-Token falsch. Format prüfen: `root@pam!terraform=uuid`
+
 **VM startet nicht / bleibt bei cloud-init hängen**
-→ Im Proxmox Web-UI Console der VM öffnen und Log prüfen. Häufigste Ursache: falsche Gateway-IP in `setup-vms.sh`.
+→ Im Proxmox Web-UI Console der VM öffnen. Häufigste Ursache: falsche Gateway-IP in `terraform.tfvars`.
