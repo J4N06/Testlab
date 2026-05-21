@@ -35,7 +35,8 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
   node_name    = var.proxmox_node
   url          = "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
   file_name    = "ubuntu-24.04-cloudimg.img"
-  overwrite    = false
+  overwrite            = false
+  overwrite_unmanaged  = true
 }
 
 resource "proxmox_virtual_environment_vm" "master" {
