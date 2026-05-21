@@ -11,6 +11,7 @@
 **/kubeconfig
 **/*.retry
 **/k3s_key
+**/k3s_key.pub
 
 # OS
 .DS_Store

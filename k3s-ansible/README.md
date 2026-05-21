@@ -18,7 +18,7 @@ Terraform erstellt 3 Ubuntu 24.04 VMs in Proxmox, Ansible installiert darauf ein
 |---|---|
 | `terraform/terraform.tfvars` | Proxmox API-Token |
 | `kubeconfig` | Cluster-Zugangsdaten |
-| `k3s_key` | Privater SSH-Key |
+| `k3s_key` / `k3s_key.pub` | SSH-Keypair — lokal generiert, nie ins Git |
 
 ---
 
@@ -107,18 +107,18 @@ cd Testlab/k3s-ansible
 
 ---
 
-## Schritt 5 — Projekt-SSH-Key erstellen
+## Schritt 5 — VM-SSH-Key erstellen
+
+> Dieser Key ist **nicht** der GitHub-Key aus Schritt 3.
+> `k3s_key` ist der Key mit dem Ansible auf die VMs zugreift — er wird beim VM-Erstellen automatisch eingespielt.
 
 ```bash
 ssh-keygen -t ed25519 -f k3s_key -N ""
-git add k3s_key.pub
-git commit -m "add: projekt ssh public key"
-git push
 ```
 
 ### Weitere Benutzer hinzufügen (optional)
 
-Public Keys in `team_keys.pub` eintragen (eine Zeile pro Key) und committen:
+Damit weitere Personen per SSH auf die VMs zugreifen können, ihre Public Keys in `team_keys.pub` eintragen (eine Zeile pro Key) und committen:
 
 ```
 ssh-ed25519 AAAAC3... jan@laptop
