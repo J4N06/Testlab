@@ -77,16 +77,37 @@ unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip
 
 ---
 
-## Schritt 3 — Repository clonen
+## Schritt 3 — GitHub SSH einrichten
+
+GitHub akzeptiert kein Passwort mehr — SSH-Key für den Push einrichten:
 
 ```bash
-git clone https://github.com/J4N06/Testlab.git
+# SSH-Key generieren (falls noch nicht vorhanden)
+ssh-keygen -t ed25519 -f /root/.ssh/id_ed25519 -N ""
+
+# Public Key anzeigen und bei GitHub hinterlegen
+cat /root/.ssh/id_ed25519.pub
+```
+
+**GitHub → Settings → SSH and GPG keys → New SSH key** → Key einfügen → Add SSH key
+
+```bash
+# Verbindung testen — erwartet: "Hi J4N06! You've successfully authenticated..."
+ssh -T git@github.com
+```
+
+---
+
+## Schritt 4 — Repository clonen
+
+```bash
+git clone git@github.com:J4N06/Testlab.git
 cd Testlab/k3s-ansible
 ```
 
 ---
 
-## Schritt 4 — Projekt-SSH-Key erstellen
+## Schritt 5 — Projekt-SSH-Key erstellen
 
 ```bash
 ssh-keygen -t ed25519 -f k3s_key -N ""
@@ -106,7 +127,7 @@ ssh-ed25519 AAAAC3... lisa@pc
 
 ---
 
-## Schritt 5 — Proxmox API-Token erstellen
+## Schritt 6 — Proxmox API-Token erstellen
 
 Proxmox Web-UI → **Datacenter → API Tokens → Add**
 
@@ -120,7 +141,7 @@ Den angezeigten Secret-Wert kopieren — er wird nur **einmal** angezeigt.
 
 ---
 
-## Schritt 6 — Terraform konfigurieren
+## Schritt 7 — Terraform konfigurieren
 
 ```bash
 cd terraform
@@ -137,7 +158,7 @@ proxmox_node      = "pve"                          # Node-Name (oben links im We
 
 ---
 
-## Schritt 7 — VMs erstellen
+## Schritt 8 — VMs erstellen
 
 ```bash
 terraform init
@@ -148,7 +169,7 @@ Terraform lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 
 
 ---
 
-## Schritt 8 — Verbindung testen
+## Schritt 9 — Verbindung testen
 
 ~60 Sekunden warten bis cloud-init fertig ist, dann:
 
@@ -166,7 +187,7 @@ worker2 | SUCCESS
 
 ---
 
-## Schritt 9 — k3s installieren
+## Schritt 10 — k3s installieren
 
 ```bash
 ansible-playbook site.yml
@@ -176,7 +197,7 @@ Dauert ca. 5–8 Minuten.
 
 ---
 
-## Schritt 10 — Cluster prüfen
+## Schritt 11 — Cluster prüfen
 
 ```bash
 ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl get nodes"
