@@ -155,11 +155,11 @@ Das Skript fragt alle Parameter interaktiv ab (mit Standardwerten) und schreibt 
 ## Schritt 8 — VMs erstellen
 
 ```bash
-terraform init
-terraform apply
+terraform init   # nur beim ersten Mal
+bash apply.sh
 ```
 
-Terraform lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 VMs und schreibt `inventory/hosts.yml` automatisch.
+`apply.sh` lädt den SSH-Key automatisch in den Agent — das ist nötig damit Terraform die VMs erstellen kann. Terraform lädt das Ubuntu 24.04 Cloud-Image herunter (~600 MB), erstellt die 3 VMs und schreibt `inventory/hosts.yml` automatisch.
 
 ---
 
@@ -211,12 +211,8 @@ worker2   Ready    <none>          1m    v1.35.x+k3s1
 
 ```bash
 cd terraform
-
-# VMs löschen
-terraform destroy
-
-# VMs neu erstellen
-terraform apply
+bash destroy.sh
+bash apply.sh
 
 # ~60 Sekunden warten, dann k3s neu installieren
 cd ..
