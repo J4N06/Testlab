@@ -191,7 +191,7 @@ worker2 | SUCCESS
 ansible-playbook site.yml
 ```
 
-Dauert ca. 5–8 Minuten.
+Dauert ca. 10–15 Minuten.
 
 ---
 
@@ -209,48 +209,3 @@ worker1   Ready    <none>          1m    v1.35.x+k3s1
 worker2   Ready    <none>          1m    v1.35.x+k3s1
 ```
 
----
-
-## VMs löschen und neu aufsetzen (Reset)
-
-```bash
-cd terraform
-bash destroy.sh
-bash apply.sh
-
-# ~60 Sekunden warten, dann k3s neu installieren
-cd ..
-ansible all -m ping
-ansible-playbook site.yml
-```
-
----
-
-## Updates einspielen
-
-```bash
-git pull
-ansible-playbook site.yml
-```
-
----
-
-## Häufige Fehler
-
-**`ssh ubuntu@192.168.2.21` — Permission denied (publickey)**
-→ Projekt-Key angeben:
-```bash
-ssh -i k3s_key ubuntu@192.168.2.21
-```
-
-**`ansible all -m ping` schlägt fehl**
-→ Verbindung manuell testen:
-```bash
-ssh -i k3s_key ubuntu@192.168.2.21
-```
-
-**`terraform apply` — 401 Unauthorized**
-→ API-Token falsch. Format prüfen: `root@pam!terraform=uuid`
-
-**VM startet nicht / bleibt bei cloud-init hängen**
-→ Im Proxmox Web-UI Console der VM öffnen. Häufigste Ursache: falsche Gateway-IP in `terraform.tfvars`.
