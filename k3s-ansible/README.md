@@ -145,16 +145,10 @@ Den angezeigten Secret-Wert kopieren — er wird nur **einmal** angezeigt.
 
 ```bash
 cd terraform
-cp terraform.tfvars.example terraform.tfvars
+bash configure.sh
 ```
 
-`terraform.tfvars` bearbeiten:
-
-```hcl
-proxmox_url       = "https://192.168.2.10:8006"   # IP deines Proxmox-Hosts
-proxmox_api_token = "root@pam!terraform=dein-secret"
-proxmox_node      = "pve"                          # Node-Name (oben links im Web-UI)
-```
+Das Skript fragt alle Parameter interaktiv ab (mit Standardwerten) und schreibt `terraform.tfvars` automatisch. Beim nächsten Aufruf werden die gespeicherten Werte als Vorschlag angezeigt.
 
 ---
 

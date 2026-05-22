@@ -18,8 +18,8 @@ provider "proxmox" {
   insecure  = true
 
   ssh {
-    username    = "root"
-    private_key = file("/root/.ssh/id_ed25519")
+    username = "root"
+    agent    = true
   }
 }
 

@@ -17,3 +17,9 @@
   become: true
   roles:
     - k3s_worker
+
+- name: ArgoCD installieren
+  hosts: k3s_master
+  become: true
+  roles:
+    - argocd
