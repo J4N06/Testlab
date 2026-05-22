@@ -7,6 +7,18 @@ fi
 
 TITLE="k3s Konfiguration"
 TFVARS="$(dirname "$0")/terraform.tfvars"
+KEY_FILE="$(dirname "$0")/../k3s_key"
+
+# ─── VM-SSH-Key prüfen / generieren ──────────────────────────────────────────
+if [ ! -f "$KEY_FILE" ]; then
+    whiptail --title "$TITLE" --msgbox \
+"VM-SSH-Key (k3s_key) fehlt — wird jetzt generiert.
+
+Dieser Key wird auf die VMs verteilt damit Ansible
+eine Verbindung aufbauen kann." 12 55
+    ssh-keygen -t ed25519 -f "$KEY_FILE" -N ""
+    echo ">>> k3s_key generiert."
+fi
 
 # ─── Aktuelle Werte aus terraform.tfvars lesen (oder Defaults) ───────────────
 read_var() {
