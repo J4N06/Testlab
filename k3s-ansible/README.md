@@ -94,6 +94,10 @@ cat /root/.ssh/id_ed25519.pub
 ```bash
 # Verbindung testen — erwartet: "Hi J4N06! You've successfully authenticated..."
 ssh -T git@github.com
+
+# Key auch für lokalen SSH-Zugang autorisieren (wird von Terraform benötigt)
+cat /root/.ssh/id_ed25519.pub >> /root/.ssh/authorized_keys
+chmod 600 /root/.ssh/authorized_keys
 ```
 
 ---
