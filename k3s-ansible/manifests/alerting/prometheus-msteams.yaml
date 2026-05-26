@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
         - name: prometheus-msteams
-          image: bzon/prometheus-msteams:v1.5.2
+          image: ghcr.io/prometheus-msteams/prometheus-msteams:latest
           args:
             - -config-file
             - /etc/prometheus-msteams/connectors.yaml
