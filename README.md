@@ -38,26 +38,3 @@ Automatisches Setup eines k3s-Clusters auf Proxmox:
 
 **→ [Zur Anleitung](k3s-ansible/README.md)**
 
-
-
-## Schnellstart
-
-## Services
-
-| Service | URL | Login |
-|---|---|---|
-| ArgoCD | https://192.168.2.21:30443 | admin / siehe Ansible-Output |
-| Grafana | http://192.168.2.21:30300 | admin / admin |
-
----
-
-## Netzwerk
-
-| Host | IP |
-|---|---|
-| Gateway | 192.168.2.1 |
-| Proxmox | 192.168.2.12 |
-| k3s Master | 192.168.2.21 |
-| k3s Worker 1 | 192.168.2.22 |
-| k3s Worker 2 | 192.168.2.23 |
-
