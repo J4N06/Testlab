@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-msteams-config
+  namespace: monitoring
+data:
+  connectors.yaml: |
+    connectors:
+      - alertmanager: https://iseag.webhook.office.com/webhookb2/31c4685b-9076-46cb-a17d-f1070279a54c@fc39838d-e703-4dd1-b7ce-49489159ea03/IncomingWebhook/dc1cae102f6444518109196f1c2ce045/75ad0cd4-2c7d-4096-8ee8-cdbd0f8c2c4c/V2OV4rMX62TL5xR5RIiNEWfO25iyUKH-1rC62aOjpipvU1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus-msteams
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus-msteams
+  template:
+    metadata:
+      labels:
+        app: prometheus-msteams
+    spec:
+      containers:
+        - name: prometheus-msteams
+          image: bzon/prometheus-msteams:v1.5.2
+          args:
+            - -config-file
+            - /etc/prometheus-msteams/connectors.yaml
+          ports:
+            - containerPort: 2000
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus-msteams
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-msteams-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-msteams
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus-msteams
+  ports:
+    - port: 2000
+      targetPort: 2000
