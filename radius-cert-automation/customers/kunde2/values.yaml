@@ -1,0 +1,15 @@
+customer:
+  name: kunde2
+  namespace: radius-kunde2
+  domain: radius.kunde2.ch
+  windows:
+    host: nps.kunde2.ch
+    user: "KUNDE2\\svc-certdeploy"
+
+# Täglich um 03:00 Uhr (versetzt zu Kunde1)
+schedule: "0 3 * * *"
+
+image:
+  repository: ghcr.io/j4n06/radius-cert-deployer
+  tag: latest
+  pullPolicy: Always

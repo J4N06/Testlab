@@ -1,0 +1,17 @@
+# Kopieren nach terraform.tfvars und anpassen (nie ins Git!)
+proxmox_url       = "https://192.168.2.12:8006"
+proxmox_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_node      = "pve"
+storage           = "local-lvm"
+bridge            = "vmbr0"
+
+vm_name     = "nps-test"
+vm_id       = 300
+vm_ip       = "192.168.2.30"
+vm_cores    = 4
+vm_memory   = 4096
+disk_size   = 60
+
+# Dateinamen der ISOs in Proxmox (local:iso/)
+windows_iso = "windows-server-2022.iso"
+virtio_iso  = "virtio-win.iso"

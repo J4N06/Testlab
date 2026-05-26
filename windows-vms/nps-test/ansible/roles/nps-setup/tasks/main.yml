@@ -1,0 +1,130 @@
+---
+# ─── 1. Windows Updates (optional, kann lange dauern) ────────────────────────
+- name: Windows Hostname setzen
+  ansible.windows.win_hostname:
+    name: "{{ inventory_hostname }}"
+  register: hostname_result
+
+- name: Neustart nach Hostname-Änderung
+  ansible.windows.win_reboot:
+  when: hostname_result.reboot_required
+
+# ─── 2. NPS Rolle installieren ────────────────────────────────────────────────
+- name: NPS Rolle installieren (Network Policy and Access Services)
+  ansible.windows.win_feature:
+    name:
+      - NPAS              # Network Policy and Access Services (Hauptrolle)
+      - NPAS-Policy-Server # Network Policy Server (NPS/IAS Dienst)
+    state: present
+    include_management_tools: true
+  register: nps_install
+
+- name: Neustart nach Rollen-Installation
+  ansible.windows.win_reboot:
+  when: nps_install.reboot_required
+
+- name: NPS Dienst (IAS) starten und automatisch starten
+  ansible.windows.win_service:
+    name: IAS
+    state: started
+    start_mode: auto
+
+# ─── 3. Service Account erstellen ────────────────────────────────────────────
+- name: Service Account 'svc-certdeploy' erstellen
+  ansible.windows.win_user:
+    name: svc-certdeploy
+    password: "{{ svc_certdeploy_password }}"
+    password_never_expires: true
+    user_cannot_change_password: true
+    description: "Service Account für automatisches Zertifikat-Deployment"
+    state: present
+
+- name: Service Account zu Administratoren hinzufügen
+  ansible.windows.win_group_membership:
+    name: Administrators
+    members:
+      - svc-certdeploy
+    state: present
+
+- name: Service Account zu 'Remote Management Users' hinzufügen
+  ansible.windows.win_group_membership:
+    name: Remote Management Users
+    members:
+      - svc-certdeploy
+    state: present
+
+# ─── 4. WinRM HTTPS einrichten ────────────────────────────────────────────────
+- name: WinRM Setup-Skript ausführen
+  ansible.windows.win_shell: |
+    # WinRM aktivieren
+    Enable-PSRemoting -Force -SkipNetworkProfileCheck
+
+    # Selbstsigniertes Zertifikat für WinRM HTTPS
+    $hostname = $env:COMPUTERNAME
+    $existing = Get-ChildItem Cert:\LocalMachine\My |
+        Where-Object { $_.FriendlyName -eq "WinRM HTTPS" }
+    if (-not $existing) {
+        $cert = New-SelfSignedCertificate `
+            -DnsName $hostname `
+            -CertStoreLocation "Cert:\LocalMachine\My" `
+            -KeyAlgorithm RSA -KeyLength 2048 `
+            -NotAfter (Get-Date).AddYears(5) `
+            -FriendlyName "WinRM HTTPS"
+        Write-Host "Zertifikat erstellt: $($cert.Thumbprint)"
+    } else {
+        $cert = $existing
+        Write-Host "Zertifikat bereits vorhanden: $($cert.Thumbprint)"
+    }
+
+    # HTTPS Listener einrichten
+    $listenerExists = Get-WSManInstance -ResourceURI winrm/config/Listener `
+        -SelectorSet @{Address="*"; Transport="HTTPS"} -ErrorAction SilentlyContinue
+    if (-not $listenerExists) {
+        New-WSManInstance -ResourceURI winrm/config/Listener `
+            -SelectorSet @{Address="*"; Transport="HTTPS"} `
+            -ValueSet @{Hostname=$hostname; CertificateThumbprint=$cert.Thumbprint}
+        Write-Host "HTTPS Listener erstellt"
+    }
+  register: winrm_setup
+  changed_when: "'erstellt' in winrm_setup.stdout"
+
+- name: Firewall-Regel für WinRM HTTPS (Port 5986)
+  ansible.windows.win_firewall_rule:
+    name: "WinRM HTTPS"
+    localport: "5986"
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+    enabled: true
+    profiles: domain,private
+
+# ─── 5. Zertifikat-Verzeichnis vorbereiten ────────────────────────────────────
+- name: Verzeichnis für Testzertifikate erstellen
+  ansible.windows.win_file:
+    path: C:\temp\certs
+    state: directory
+
+# ─── 6. Zusammenfassung ausgeben ─────────────────────────────────────────────
+- name: NPS Dienststatus prüfen
+  ansible.windows.win_service:
+    name: IAS
+  register: ias_status
+
+- name: Setup-Zusammenfassung
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "NPS Test-Server konfiguriert"
+      - "Hostname       : {{ ansible_hostname }}"
+      - "IP             : {{ ansible_host }}"
+      - "NPS Dienst     : {{ ias_status.state }}"
+      - "Service Account: svc-certdeploy"
+      - "WinRM HTTPS    : Port 5986"
+      - "========================================"
+      - "Kubernetes Secret erstellen:"
+      - "  kubectl create secret generic nps-test-credentials \\"
+      - "    --from-literal=windows_password='{{ svc_certdeploy_password }}' \\"
+      - "    --from-literal=pfx_password='TestPfx2024!' \\"
+      - "    -n radius-test"
+      - "========================================"

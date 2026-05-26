@@ -1,0 +1,7 @@
+---
+- name: Windows NPS Test-Server konfigurieren
+  hosts: windows
+  gather_facts: true
+
+  roles:
+    - nps-setup

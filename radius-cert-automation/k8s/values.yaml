@@ -1,0 +1,31 @@
+# Standardwerte — werden durch customers/kundeX/values.yaml überschrieben
+
+customer:
+  name: ""           # z.B. kunde1
+  namespace: ""      # z.B. radius-kunde1
+  domain: ""         # z.B. radius.kunde1.ch
+  windows:
+    host: ""         # IP oder DNS des NPS-Servers
+    user: ""         # z.B. KUNDE1\svc-certdeploy
+
+# CronJob-Zeitplan (täglich 02:00 Uhr)
+schedule: "0 2 * * *"
+
+# Docker Image (nach Build in eigene Registry pushen)
+image:
+  repository: ghcr.io/j4n06/radius-cert-deployer
+  tag: latest
+  pullPolicy: Always
+
+# cert-manager Einstellungen
+cert:
+  duration: "8760h"    # 1 Jahr
+  renewBefore: "720h"  # 30 Tage vor Ablauf erneuern
+  issuerRef:
+    name: internal-ca
+    kind: ClusterIssuer
+
+# Optionaler Slack-Webhook für Benachrichtigungen
+slack:
+  enabled: false
+  webhookSecretName: ""  # Name des Kubernetes Secrets mit dem Slack-Webhook

@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: radius-kunde2
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/J4N06/Testlab.git
+    targetRevision: HEAD
+    path: radius-cert-automation/k8s
+    helm:
+      valueFiles:
+        - ../../customers/kunde2/values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: radius-kunde2
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

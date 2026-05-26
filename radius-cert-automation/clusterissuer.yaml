@@ -1,0 +1,17 @@
+# ClusterIssuer — einmalig anwenden: kubectl apply -f clusterissuer.yaml
+# Voraussetzung: Secret "internal-ca-secret" muss bereits existieren
+#
+# Secret erstellen (einmalig, nie ins Git!):
+#   kubectl create secret tls internal-ca-secret \
+#     --cert=ca.crt \
+#     --key=ca.key \
+#     -n cert-manager
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: internal-ca
+spec:
+  ca:
+    # Name des Kubernetes Secrets mit dem CA-Zertifikat und Key
+    secretName: internal-ca-secret

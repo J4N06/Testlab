@@ -1,0 +1,73 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Values.customer.name }}-cert-deploy
+  namespace: {{ .Values.customer.namespace }}
+spec:
+  schedule: {{ .Values.schedule | quote }}
+  concurrencyPolicy: Forbid       # Kein paralleler Job
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0             # Retry-Logik ist im Skript (nicht in Kubernetes)
+      template:
+        metadata:
+          labels:
+            app: cert-deployer
+            customer: {{ .Values.customer.name }}
+        spec:
+          restartPolicy: Never
+          imagePullSecrets:
+            - name: ghcr-pull-secret
+          containers:
+            - name: cert-deployer
+              image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+              env:
+                - name: WINDOWS_HOST
+                  value: {{ .Values.customer.windows.host | quote }}
+                - name: WINDOWS_USER
+                  value: {{ .Values.customer.windows.user | quote }}
+                - name: CERT_DOMAIN
+                  value: {{ .Values.customer.domain | quote }}
+
+                # Passwörter aus Kubernetes Secret (nie im Git!)
+                - name: WINDOWS_PASS
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.customer.name }}-credentials
+                      key: windows_password
+                - name: PFX_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.customer.name }}-credentials
+                      key: pfx_password
+
+                {{- if .Values.slack.enabled }}
+                - name: SLACK_WEBHOOK
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.slack.webhookSecretName }}
+                      key: url
+                {{- end }}
+
+              # TLS-Zertifikat von cert-manager (tls.crt + tls.key)
+              volumeMounts:
+                - name: tls-cert
+                  mountPath: /certs
+                  readOnly: true
+
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"
+
+          volumes:
+            - name: tls-cert
+              secret:
+                secretName: {{ .Values.customer.name }}-tls
