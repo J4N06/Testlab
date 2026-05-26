@@ -23,3 +23,9 @@
   become: true
   roles:
     - argocd
+
+- name: Monitoring installieren
+  hosts: k3s_master
+  become: true
+  roles:
+    - monitoring

@@ -24,10 +24,10 @@
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
 - name: ArgoCD Service auf NodePort setzen
-  ansible.builtin.command:
+  ansible.builtin.shell:
     cmd: >-
       kubectl patch svc argocd-server -n argocd -p
-      {"spec":{"type":"NodePort","ports":[{"name":"http","port":80,"targetPort":8080,"nodePort":30080},{"name":"https","port":443,"targetPort":8080,"nodePort":30443}]}}
+      '{"spec":{"type":"NodePort","ports":[{"name":"http","port":80,"targetPort":8080,"nodePort":30080},{"name":"https","port":443,"targetPort":8080,"nodePort":30443}]}}'
   changed_when: true
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml

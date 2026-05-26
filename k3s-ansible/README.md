@@ -209,3 +209,18 @@ worker1   Ready    <none>          1m    v1.35.x+k3s1
 worker2   Ready    <none>          1m    v1.35.x+k3s1
 ```
 
+---
+
+## Zugang — Installierte Services
+
+| Service    | URL                              | Benutzer | Passwort                          |
+|------------|----------------------------------|----------|-----------------------------------|
+| ArgoCD     | https://192.168.2.21:30443       | admin    | siehe Ansible-Output              |
+| Grafana    | http://192.168.2.21:30300        | admin    | admin                             |
+
+### ArgoCD Passwort auslesen
+
+```bash
+ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+```
+
