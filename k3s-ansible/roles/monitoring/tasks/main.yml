@@ -1,54 +1,31 @@
 ---
-- name: Prüfen ob Helm bereits installiert ist
-  ansible.builtin.stat:
-    path: /usr/local/bin/helm
-  register: helm_binary
-
-- name: Helm installieren
-  ansible.builtin.shell:
-    cmd: curl -fsSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-  when: not helm_binary.stat.exists
-  changed_when: true
-
-- name: prometheus-community Helm-Repo hinzufügen
+- name: Bestehenden Helm-Release entfernen falls vorhanden
   ansible.builtin.command:
-    cmd: helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-  register: repo_result
-  changed_when: "'has been added' in repo_result.stdout"
-  failed_when: repo_result.rc != 0 and 'already exists' not in repo_result.stderr
+    cmd: helm uninstall kube-prometheus-stack --namespace monitoring
+  register: helm_uninstall
+  failed_when: helm_uninstall.rc != 0 and 'not found' not in helm_uninstall.stderr
+  changed_when: helm_uninstall.rc == 0
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: Helm Repos aktualisieren
+- name: ArgoCD Application für Monitoring deployen
+  ansible.builtin.copy:
+    src: monitoring.yaml
+    dest: /tmp/argocd-monitoring.yaml
+    mode: "0644"
+
+- name: ArgoCD Application anwenden
   ansible.builtin.command:
-    cmd: helm repo update
+    cmd: kubectl apply -f /tmp/argocd-monitoring.yaml
+  register: app_result
+  changed_when: "'configured' in app_result.stdout or 'created' in app_result.stdout"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Warten bis Grafana bereit ist
+  ansible.builtin.command:
+    cmd: kubectl rollout status deployment/kube-prometheus-stack-grafana -n monitoring --timeout=300s
   changed_when: false
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: Monitoring Namespace erstellen
-  ansible.builtin.command:
-    cmd: kubectl create namespace monitoring
-  register: ns_result
-  failed_when: ns_result.rc != 0 and 'already exists' not in ns_result.stderr
-  changed_when: "'created' in ns_result.stdout"
-  environment:
-    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
-
-- name: kube-prometheus-stack installieren
-  ansible.builtin.command:
-    cmd: >-
-      helm upgrade --install kube-prometheus-stack
-      prometheus-community/kube-prometheus-stack
-      --namespace monitoring
-      --set grafana.service.type=NodePort
-      --set grafana.service.nodePort=30300
-      --set grafana.adminPassword=admin
-      --set prometheus.prometheusSpec.retention=7d
-      --timeout 10m
-      --wait
-  register: helm_result
-  changed_when: "'deployed' in helm_result.stdout or 'upgraded' in helm_result.stdout"
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 

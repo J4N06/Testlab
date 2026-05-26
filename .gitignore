@@ -12,6 +12,7 @@
 **/*.retry
 **/k3s_key
 **/k3s_key.pub
+**/inventory/hosts.yml
 
 # OS
 .DS_Store

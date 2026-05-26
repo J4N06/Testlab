@@ -191,7 +191,43 @@ worker2 | SUCCESS
 ansible-playbook site.yml
 ```
 
-Dauert ca. 10–15 Minuten.
+Dauert ca. 10–15 Minuten. Das Playbook durchläuft folgende Phasen:
+
+### Was Ansible installiert
+
+**1. Common (alle Nodes)**
+- System-Updates
+- Kernel-Module (`overlay`, `br_netfilter`) für Kubernetes-Networking
+- Sysctl-Parameter (IP-Forwarding, Bridge-Filter)
+- Swap deaktivieren (Kubernetes-Anforderung)
+- Hostname auf den Inventar-Namen setzen
+
+**2. k3s Master**
+- k3s Server installieren mit:
+  - Traefik deaktiviert (kein Ingress-Controller)
+  - Flannel als CNI-Backend
+  - API-Server auf Master-IP gebunden
+- Node-Token auslesen (für Worker-Join)
+- `kubeconfig` lokal ablegen (für direkten `kubectl`-Zugriff vom Proxmox-Host)
+
+**3. k3s Worker (2x)**
+- k3s Agent installieren
+- Automatisch dem Master-Cluster beitreten via Node-Token
+
+**4. ArgoCD**
+- Namespace `argocd` erstellen
+- ArgoCD via kubectl aus dem offiziellen Manifest installieren
+- Service auf NodePort 30443 (HTTPS) umstellen
+- Initiales Admin-Passwort ausgeben
+
+**5. Monitoring**
+- ArgoCD Application für `kube-prometheus-stack` deployen → ArgoCD übernimmt die Installation via Helm:
+  - **Prometheus** — Metriken sammeln (Retention: 7 Tage)
+  - **Grafana** — Dashboards auf Port 30300
+  - **Alertmanager** — Alert-Verwaltung
+  - **node-exporter** — Node-Metriken (CPU, RAM, Disk, Netzwerk)
+  - **kube-state-metrics** — Pod/Deployment-Zustand
+- Custom Dashboard "k3s Cluster Overview" automatisch in Grafana laden
 
 ---
 
@@ -209,18 +245,51 @@ worker1   Ready    <none>          1m    v1.35.x+k3s1
 worker2   Ready    <none>          1m    v1.35.x+k3s1
 ```
 
+Alle Pods prüfen:
+```bash
+ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl get pods -A"
+```
+
 ---
 
 ## Zugang — Installierte Services
 
-| Service    | URL                              | Benutzer | Passwort                          |
-|------------|----------------------------------|----------|-----------------------------------|
-| ArgoCD     | https://192.168.2.21:30443       | admin    | siehe Ansible-Output              |
-| Grafana    | http://192.168.2.21:30300        | admin    | admin                             |
+| Service    | URL                        | Benutzer | Passwort             |
+|------------|----------------------------|----------|----------------------|
+| ArgoCD     | https://192.168.2.21:30443 | admin    | siehe unten          |
+| Grafana    | http://192.168.2.21:30300  | admin    | admin                |
+
+> Browser warnt bei ArgoCD wegen self-signed Zertifikat — einfach akzeptieren.
 
 ### ArgoCD Passwort auslesen
 
 ```bash
 ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+```
+
+### ArgoCD — Was wird angezeigt
+
+Nach dem Login siehst du die App **kube-prometheus-stack** mit:
+- Sync-Status (ist der Cluster identisch mit dem Helm-Chart?)
+- Health-Status aller Pods (Prometheus, Grafana, Alertmanager, ...)
+- Dependency-Graph aller Kubernetes-Objekte der App
+
+### Grafana — Dashboards
+
+Unter **Dashboards → Browse** sind vorhanden:
+- **k3s Cluster Overview** — eigenes Dashboard (CPU, RAM, Netzwerk, Disk pro Node, Pod-Tabelle)
+- **Kubernetes / Compute Resources** — Standard-Dashboards für Pods, Namespaces, Nodes
+
+---
+
+## Reset — Alles neu aufsetzen
+
+```bash
+cd terraform
+bash destroy.sh   # VMs löschen
+bash apply.sh     # VMs neu erstellen
+cd ..
+sleep 60          # cloud-init abwarten
+ansible-playbook site.yml
 ```
 
