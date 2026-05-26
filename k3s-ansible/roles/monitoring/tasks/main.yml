@@ -10,7 +10,7 @@
 
 - name: ArgoCD Application für Monitoring deployen
   ansible.builtin.copy:
-    src: monitoring.yaml
+    src: "{{ playbook_dir }}/argocd-apps/monitoring.yaml"
     dest: /tmp/argocd-monitoring.yaml
     mode: "0644"
 
