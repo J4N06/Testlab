@@ -148,7 +148,7 @@
       },
       "targets": [
         {
-          "expr": "100 - (rate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * 100)",
+          "expr": "avg by (instance) (100 - rate(node_cpu_seconds_total{mode=\"idle\"}[5m]) * 100)",
           "legendFormat": "{{ instance }}"
         }
       ]
@@ -171,11 +171,7 @@
       "targets": [
         {
           "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
-          "legendFormat": "{{ instance }} used"
-        },
-        {
-          "expr": "node_memory_MemTotal_bytes",
-          "legendFormat": "{{ instance }} total"
+          "legendFormat": "{{ instance }}"
         }
       ]
     },
@@ -252,25 +248,14 @@
         "defaults": { "custom": { "filterable": true } },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Status" },
+            "matcher": { "id": "byName", "options": "Phase" },
             "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "thresholds",
-                "value": {
-                  "mode": "absolute",
-                  "steps": [
-                    { "color": "red", "value": null },
-                    { "color": "green", "value": 1 }
-                  ]
-                }
-              },
+              { "id": "custom.displayMode", "value": "color-background" },
               { "id": "mappings", "value": [
-                { "type": "value", "options": { "1": { "text": "Running", "color": "green" } } },
-                { "type": "value", "options": { "0": { "text": "Not Running", "color": "red" } } }
+                { "type": "value", "options": { "running":  { "text": "Running",  "color": "green"  } } },
+                { "type": "value", "options": { "pending":  { "text": "Pending",  "color": "yellow" } } },
+                { "type": "value", "options": { "failed":   { "text": "Failed",   "color": "red"    } } },
+                { "type": "value", "options": { "unknown":  { "text": "Unknown",  "color": "orange" } } }
               ]}
             ]
           }
@@ -278,13 +263,7 @@
       },
       "targets": [
         {
-          "expr": "kube_pod_info",
-          "legendFormat": "",
-          "instant": true,
-          "format": "table"
-        },
-        {
-          "expr": "kube_pod_status_phase{phase=\"Running\"} == 1",
+          "expr": "kube_pod_status_phase == 1",
           "legendFormat": "",
           "instant": true,
           "format": "table"
@@ -292,33 +271,24 @@
       ],
       "transformations": [
         {
-          "id": "merge",
-          "options": {}
-        },
-        {
           "id": "organize",
           "options": {
             "renameByName": {
               "namespace": "Namespace",
               "pod": "Pod",
-              "node": "Node",
-              "Value #A": "Info",
-              "Value #B": "Status"
+              "phase": "Phase"
             },
             "excludeByName": {
               "Time": true,
-              "__name__": true,
-              "container": true,
-              "created_by_kind": true,
-              "created_by_name": true,
-              "host_ip": true,
-              "host_network": true,
+              "Value": true,
               "instance": true,
               "job": true,
-              "phase": true,
-              "pod_ip": true,
-              "uid": true,
-              "Info": true
+              "uid": true
+            },
+            "indexByName": {
+              "namespace": 0,
+              "pod": 1,
+              "phase": 2
             }
           }
         }
