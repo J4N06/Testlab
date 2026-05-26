@@ -52,6 +52,25 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
+- name: Dashboard JSON auf Master kopieren
+  ansible.builtin.copy:
+    src: k3s-cluster-dashboard.json
+    dest: /tmp/k3s-cluster-dashboard.json
+    mode: "0644"
+
+- name: Custom Dashboard als ConfigMap deployen
+  ansible.builtin.shell:
+    cmd: |
+      kubectl create configmap k3s-cluster-dashboard \
+        --from-file=k3s-cluster-dashboard.json=/tmp/k3s-cluster-dashboard.json \
+        --namespace monitoring \
+        --dry-run=client -o yaml | \
+      kubectl label --local -f - grafana_dashboard=1 -o yaml | \
+      kubectl apply -f -
+  changed_when: true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
 - name: Monitoring Zugangsdaten anzeigen
   ansible.builtin.debug:
     msg:
