@@ -10,7 +10,12 @@
       "Bash(git commit -m ' *)",
       "Bash(git push *)",
       "Bash(cd \"c:\\\\GitHub\\\\Testlab\\\\windows-vms\\\\packer\" && grep -r \"cd_storage_pool\\\\|controller_type\\\\|scsi_controller\\\\|iso_storage_pool\" \"c:\\\\Users\\\\jan.birchler\\\\.config\\\\packer\\\\plugins\" 2>/dev/null | head -20 || echo \"plugins not local\")",
-      "Read(//c/Users/jan.birchler/.config/packer/**)"
+      "Read(//c/Users/jan.birchler/.config/packer/**)",
+      "Bash(git -C c:/GitHub/Testlab status)",
+      "Bash(git -C c:/GitHub/Testlab diff HEAD -- windows-vms/packer/windows-2025.pkr.hcl)",
+      "Bash(git -C c:/GitHub/Testlab add windows-vms/packer/windows-2025.pkr.hcl)",
+      "Bash(git -C c:/GitHub/Testlab commit -m ' *)",
+      "Bash(git -C c:/GitHub/Testlab push)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\GitHub\\Testlab\\k3s-ansible",
