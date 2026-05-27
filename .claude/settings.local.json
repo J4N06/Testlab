@@ -5,7 +5,10 @@
       "Read(//mnt/c/GitHub/**)",
       "Bash(rm /mnt/c/GitHub/Testlab/k3s-ansible/.gitignore 2>/dev/null && echo \"removed\" || echo \"not found\")",
       "Bash(rm /mnt/c/GitHub/Testlab/k3s-ansible/setup-vms.sh)",
-      "Bash(mkdir -p \"c:/GitHub/Testlab/windows-vms/nps-test\" && mv \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform/\"* \"c:/GitHub/Testlab/windows-vms/nps-test/\" && rmdir \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform\")"
+      "Bash(mkdir -p \"c:/GitHub/Testlab/windows-vms/nps-test\" && mv \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform/\"* \"c:/GitHub/Testlab/windows-vms/nps-test/\" && rmdir \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\GitHub\\Testlab\\k3s-ansible",
