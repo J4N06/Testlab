@@ -35,7 +35,7 @@ variable "storage" {
 
 variable "windows_iso" {
   type    = string
-  default = "windows-server-2025-autounattend.iso"
+  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
 }
 
 variable "vm_password" {
@@ -55,20 +55,35 @@ source "proxmox-iso" "windows-2025" {
   vm_id   = 9000
   vm_name = "windows-server-2025"
 
-  # Windows ISO → geht automatisch auf ide2
-  # ide0 + ide1 bleiben leer → SeaBIOS bootet direkt von ide2
-  iso_file         = "local:iso/${var.windows_iso}"
-  iso_storage_pool = "local"
-  unmount_iso      = true
+  boot_iso {
+    iso_file         = "local:iso/${var.windows_iso}"
+    iso_storage_pool = "local"
+    unmount          = true
+  }
 
-  # Hardware
+  # autounattend.xml als separates ISO — mit UEFI kein WinPE-Crash mehr
+  additional_iso_files {
+    iso_file         = "local:iso/autounattend.iso"
+    iso_storage_pool = "local"
+    type             = "ide"
+    index            = 3
+    unmount          = true
+  }
+
+  # Hardware — UEFI/OVMF statt SeaBIOS
   machine  = "q35"
+  bios     = "ovmf"
+  efi_config {
+    efi_storage_pool  = var.storage
+    efi_type          = "4m"
+    pre_enrolled_keys = false
+  }
+
   cpu_type = "x86-64-v2-AES"
   cores    = 4
   memory   = 4096
   os       = "win11"
 
-  # SATA Disk — kein VirtIO-Treiber in WinPE nötig (AHCI eingebaut)
   disks {
     disk_size    = "60G"
     storage_pool = var.storage
@@ -89,7 +104,6 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  # "Press any key" Fenster erscheint ~1s nach POST, dauert ~5s
   boot_wait    = "3s"
   boot_command = ["<enter>"]
 
@@ -101,12 +115,10 @@ source "proxmox-iso" "windows-2025" {
 build {
   sources = ["source.proxmox-iso.windows-2025"]
 
-  # WinRM HTTPS, Cleanup (VirtIO Tools optional — ISO nicht mehr eingebunden)
   provisioner "powershell" {
     script = "scripts/setup.ps1"
   }
 
-  # Sysprep → VM fährt herunter → Packer erstellt Template
   provisioner "powershell" {
     inline = [
       "Start-Process 'C:\\Windows\\System32\\Sysprep\\sysprep.exe' -ArgumentList '/generalize /oobe /shutdown /quiet' -Wait"
