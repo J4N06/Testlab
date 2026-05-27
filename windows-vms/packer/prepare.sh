@@ -25,13 +25,10 @@ fi
 [ -f "$WIN_ISO" ] || { echo "FEHLER: $WIN_ISO nicht gefunden"; exit 1; }
 
 echo "1/4 Lese ISO-Metadaten..."
-BOOT_PARAMS=$(xorriso -indev "$WIN_ISO" -report_el_torito as_mkisofs 2>/dev/null \
-  | grep -v "^xorriso" | grep -v "^$" | tr '\n' ' ')
 VOL_LABEL=$(xorriso -indev "$WIN_ISO" -pvd_info 2>/dev/null \
   | awk -F"'" '/Volume id/{print $2; exit}')
 [ -z "$VOL_LABEL" ] && VOL_LABEL="WIN_SERVER_2025"
 echo "   Volume: $VOL_LABEL"
-echo "   Boot:   $BOOT_PARAMS"
 
 echo "2/4 Extrahiere ISO-Inhalt (~5 GB)..."
 mkdir -p "$WORK_DIR"
@@ -43,13 +40,37 @@ echo "3/4 Füge autounattend.xml ein..."
 cp "$SCRIPT_DIR/autounattend.xml" "$WORK_DIR/autounattend.xml"
 
 echo "4/4 Erstelle bootbares ISO..."
+
+# BIOS-Boot-Image suchen (Standard Windows Server Pfad)
+BIOS_BOOT=""
+for f in "boot/etfsboot.com" "Boot/etfsboot.com" "BOOT/ETFSBOOT.COM"; do
+  [ -f "$WORK_DIR/$f" ] && BIOS_BOOT="$f" && break
+done
+
+# EFI-Boot-Image suchen
+EFI_BOOT=""
+for f in "efi/microsoft/boot/efisys_noprompt.bin" \
+         "efi/microsoft/boot/efisys.bin" \
+         "EFI/Microsoft/Boot/efisys_noprompt.bin" \
+         "EFI/Microsoft/Boot/efisys.bin"; do
+  [ -f "$WORK_DIR/$f" ] && EFI_BOOT="$f" && break
+done
+
+echo "   BIOS Boot: ${BIOS_BOOT:-NICHT GEFUNDEN}"
+echo "   EFI  Boot: ${EFI_BOOT:-nicht gefunden}"
+
+[ -z "$BIOS_BOOT" ] && { echo "FEHLER: boot/etfsboot.com nicht im ISO gefunden!"; exit 1; }
+
+BOOT_PARAMS="-b '$BIOS_BOOT' -no-emul-boot -boot-load-size 8 -boot-info-table --boot-catalog-hide"
+[ -n "$EFI_BOOT" ] && BOOT_PARAMS="$BOOT_PARAMS --eltorito-alt-boot -e '$EFI_BOOT' -no-emul-boot"
+
 eval "xorriso -as mkisofs \
   -iso-level 4 \
   -full-iso9660-filenames \
   -J -joliet-long \
-  -V \"$VOL_LABEL\" \
+  -V '$VOL_LABEL' \
   $BOOT_PARAMS \
-  -o \"$OUT_ISO\" \
-  \"$WORK_DIR\""
+  -o '$OUT_ISO' \
+  '$WORK_DIR'"
 
 echo "Fertig: $OUT_ISO ($(du -h "$OUT_ISO" | cut -f1))"
