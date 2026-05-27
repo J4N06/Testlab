@@ -40,7 +40,7 @@ variable "windows_iso" {
 
 variable "virtio_iso" {
   type    = string
-  default = "virtio-win.iso"
+  default = "virtio-win-0.1.285.iso"
 }
 
 variable "vm_password" {
