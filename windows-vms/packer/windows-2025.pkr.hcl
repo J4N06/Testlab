@@ -58,14 +58,7 @@ source "proxmox-iso" "windows-2025" {
   iso_storage_pool = "local"
   unmount_iso      = true
 
-  # UEFI/OVMF — Windows Server 2025 ist UEFI-first
   machine  = "q35"
-  bios     = "ovmf"
-  efi_config {
-    efi_storage_pool  = var.storage
-    efi_type          = "4m"
-    pre_enrolled_keys = false
-  }
 
   cpu_type = "x86-64-v2-AES"
   cores    = 4
@@ -92,8 +85,7 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  # OVMF braucht länger zum Initialisieren als SeaBIOS
-  boot_wait    = "10s"
+  boot_wait    = "3s"
   boot_command = ["<enter>"]
 
   template_name        = "windows-server-2025"
