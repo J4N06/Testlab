@@ -115,9 +115,9 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  # Windows bootet automatisch vom ISO, autounattend.xml übernimmt
-  boot_wait    = "5s"
-  boot_command = ["<enter>"]
+  # "Press any key to boot from CD..." Fenster erscheint kurz nach POST
+  boot_wait    = "3s"
+  boot_command = ["<spacebar><enter><spacebar><enter><spacebar><enter>"]
 
   # Template in Proxmox
   template_name        = "windows-server-2025"
