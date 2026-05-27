@@ -7,7 +7,6 @@ packer {
   }
 }
 
-# ─── Variablen ────────────────────────────────────────────────────────────────
 variable "proxmox_url" {
   type    = string
   default = "https://192.168.2.12:8006/api2/json"
@@ -35,7 +34,7 @@ variable "storage" {
 
 variable "windows_iso" {
   type    = string
-  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
+  default = "windows-server-2025-autounattend.iso"
 }
 
 variable "vm_password" {
@@ -44,7 +43,6 @@ variable "vm_password" {
   description = "Administrator Passwort für das Template"
 }
 
-# ─── Source ───────────────────────────────────────────────────────────────────
 source "proxmox-iso" "windows-2025" {
   proxmox_url              = var.proxmox_url
   username                 = var.proxmox_token_id
@@ -55,22 +53,12 @@ source "proxmox-iso" "windows-2025" {
   vm_id   = 9000
   vm_name = "windows-server-2025"
 
-  boot_iso {
-    iso_file         = "local:iso/${var.windows_iso}"
-    iso_storage_pool = "local"
-    unmount          = true
-  }
+  # autounattend.xml ist direkt im ISO eingebettet — kein extra CD nötig
+  iso_file         = "local:iso/${var.windows_iso}"
+  iso_storage_pool = "local"
+  unmount_iso      = true
 
-  # autounattend.xml als separates ISO — mit UEFI kein WinPE-Crash mehr
-  additional_iso_files {
-    iso_file         = "local:iso/autounattend.iso"
-    iso_storage_pool = "local"
-    type             = "ide"
-    index            = 3
-    unmount          = true
-  }
-
-  # Hardware — UEFI/OVMF statt SeaBIOS
+  # UEFI/OVMF — Windows Server 2025 ist UEFI-first
   machine  = "q35"
   bios     = "ovmf"
   efi_config {
@@ -104,14 +92,14 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  boot_wait    = "3s"
+  # OVMF braucht länger zum Initialisieren als SeaBIOS
+  boot_wait    = "10s"
   boot_command = ["<enter>"]
 
   template_name        = "windows-server-2025"
   template_description = "Windows Server 2025 Standard (Desktop Experience) | Packer Build"
 }
 
-# ─── Build ────────────────────────────────────────────────────────────────────
 build {
   sources = ["source.proxmox-iso.windows-2025"]
 
