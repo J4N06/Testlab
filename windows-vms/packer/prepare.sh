@@ -65,6 +65,7 @@ BOOT_PARAMS="-b '$BIOS_BOOT' -no-emul-boot -boot-load-size 8 -boot-info-table"
 [ -n "$EFI_BOOT" ] && BOOT_PARAMS="$BOOT_PARAMS --eltorito-alt-boot -e '$EFI_BOOT' -no-emul-boot"
 
 eval "xorriso -as mkisofs \
+  -iso-level 3 \
   -J -joliet-long \
   -V '$VOL_LABEL' \
   $BOOT_PARAMS \
