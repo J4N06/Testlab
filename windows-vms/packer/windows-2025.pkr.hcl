@@ -60,27 +60,26 @@ source "proxmox-iso" "windows-2025" {
   vm_id   = 9000
   vm_name = "windows-server-2025"
 
-  # Windows Server 2025 ISO (Hauptinstallation)
-  boot_iso {
-    iso_file         = "local:iso/${var.windows_iso}"
-    iso_storage_pool = "local"
-    unmount          = true
-  }
+  # Windows Server 2025 ISO — primäres Boot-Gerät (IDE, wird zuerst gebootet)
+  iso_file         = "local:iso/${var.windows_iso}"
+  iso_storage_pool = "local"
+  unmount_iso      = true
 
   additional_iso_files {
-    # Autounattend ISO — einmalig erstellen mit: bash prepare.sh
+    # Autounattend ISO — auf SATA damit IDE-Bootreihenfolge nicht gestört wird
+    # einmalig erstellen mit: bash prepare.sh
     iso_file         = "local:iso/autounattend.iso"
     iso_storage_pool = "local"
-    type             = "ide"
+    type             = "sata"
     index            = 0
     unmount          = true
   }
 
   additional_iso_files {
-    # VirtIO Treiber — nötig damit Windows die virtuelle Disk sieht
+    # VirtIO Treiber — auf SATA
     iso_file         = "local:iso/${var.virtio_iso}"
     iso_storage_pool = "local"
-    type             = "ide"
+    type             = "sata"
     index            = 1
     unmount          = true
   }
