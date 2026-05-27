@@ -71,7 +71,7 @@ source "proxmox-iso" "windows-2025" {
     # Autounattend Answer File — Windows Setup findet es automatisch auf allen Laufwerken
     cd_files         = ["./autounattend.xml"]
     cd_label         = "Autounattend"
-    cd_storage_pool  = "local"
+    iso_storage_pool = "local"
     type             = "ide"
     index            = 0
     unmount          = true
@@ -93,14 +93,15 @@ source "proxmox-iso" "windows-2025" {
   memory   = 4096
   os       = "win11"
 
+  scsi_controller = "virtio-scsi-single"
+
   disks {
-    disk_size       = "60G"
-    storage_pool    = var.storage
-    type            = "scsi"
-    cache_mode      = "writeback"
-    io_thread       = true
-    discard         = true
-    controller_type = "virtio-scsi-single"
+    disk_size    = "60G"
+    storage_pool = var.storage
+    type         = "scsi"
+    cache_mode   = "writeback"
+    io_thread    = true
+    discard      = true
   }
 
   network_adapters {
