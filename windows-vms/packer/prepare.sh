@@ -20,10 +20,12 @@ if ! command -v xorriso &>/dev/null; then
   apt-get install -y xorriso
 fi
 
-echo "Erstelle $OUT_ISO (~5 GB, dauert 1-2 Minuten)..."
+echo "Kopiere Windows ISO nach $OUT_ISO (~5 GB, dauert 1-2 Min.)..."
+cp "$WIN_ISO" "$OUT_ISO"
+
+echo "Injiziere autounattend.xml..."
 xorriso \
-  -indev "$WIN_ISO" \
-  -outdev "$OUT_ISO" \
+  -dev "$OUT_ISO" \
   -map "$SCRIPT_DIR/autounattend.xml" /autounattend.xml \
   --
 
