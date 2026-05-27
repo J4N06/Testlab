@@ -1,48 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <unattend xmlns="urn:schemas-microsoft-com:unattend">
 
-  <!-- ═══════════════════════════════════════════════════════════
-       WindowsPE Pass — Treiber laden + Disk konfigurieren + Edition wählen
-       ═══════════════════════════════════════════════════════════ -->
   <settings pass="windowsPE">
-
-    <!-- VirtIO Treiber laden damit die virtuelle Disk sichtbar ist -->
-    <component name="Microsoft-Windows-PnpCustomizationsWinPE"
-               processorArchitecture="amd64"
-               publicKeyToken="31bf3856ad364e35"
-               language="neutral"
-               versionScope="nonSxS"
-               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
-      <DriverPaths>
-        <!-- VirtIO SCSI Disk Treiber — D: bis G: da Laufwerkszuweisung variiert -->
-        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
-          <Path>D:\viostor\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
-          <Path>E:\viostor\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
-          <Path>F:\viostor\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
-          <Path>G:\viostor\2k25\amd64</Path>
-        </PathAndCredentials>
-        <!-- VirtIO Netzwerk Treiber -->
-        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
-          <Path>D:\NetKVM\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
-          <Path>E:\NetKVM\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="7">
-          <Path>F:\NetKVM\2k25\amd64</Path>
-        </PathAndCredentials>
-        <PathAndCredentials wcm:action="add" wcm:keyValue="8">
-          <Path>G:\NetKVM\2k25\amd64</Path>
-        </PathAndCredentials>
-      </DriverPaths>
-    </component>
-
     <component name="Microsoft-Windows-Setup"
                processorArchitecture="amd64"
                publicKeyToken="31bf3856ad364e35"
@@ -50,37 +9,17 @@
                versionScope="nonSxS"
                xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
 
-      <!-- Windows Server 2025 Standard (Desktop Experience) auswählen
-           Index prüfen: dism /get-imageinfo /imagefile:D:\sources\install.wim
-           1 = Standard Core | 2 = Standard Desktop | 3 = DC Core | 4 = DC Desktop -->
-      <ImageInstall>
-        <OSImage>
-          <InstallTo>
-            <DiskID>0</DiskID>
-            <PartitionID>2</PartitionID>
-          </InstallTo>
-          <InstallFrom>
-            <MetaData wcm:action="add">
-              <Key>/IMAGE/INDEX</Key>
-              <Value>2</Value>
-            </MetaData>
-          </InstallFrom>
-        </OSImage>
-      </ImageInstall>
-
-      <!-- Disk partitionieren (MBR/BIOS — kompatibel mit SeaBIOS in Proxmox) -->
+      <!-- Disk partitionieren (MBR) — DiskConfiguration muss vor ImageInstall stehen -->
       <DiskConfiguration>
         <Disk wcm:action="add">
           <DiskID>0</DiskID>
           <WillWipeDisk>true</WillWipeDisk>
           <CreatePartitions>
-            <!-- System Reserved (Boot) -->
             <CreatePartition wcm:action="add">
               <Order>1</Order>
               <Type>Primary</Type>
               <Size>500</Size>
             </CreatePartition>
-            <!-- Windows Partition (Rest der Disk) -->
             <CreatePartition wcm:action="add">
               <Order>2</Order>
               <Type>Primary</Type>
@@ -106,8 +45,23 @@
         </Disk>
       </DiskConfiguration>
 
+      <!-- Windows Server 2025 Standard Desktop Experience -->
+      <ImageInstall>
+        <OSImage>
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>2</PartitionID>
+          </InstallTo>
+          <InstallFrom>
+            <MetaData wcm:action="add">
+              <Key>/IMAGE/INDEX</Key>
+              <Value>2</Value>
+            </MetaData>
+          </InstallFrom>
+        </OSImage>
+      </ImageInstall>
+
       <UserData>
-        <!-- KMS Client Key für Windows Server 2025 Standard (öffentlicher GVLK Key) -->
         <ProductKey>
           <Key>TVRH6-WHNXV-R9WG3-9XRFY-MY832</Key>
           <WillShowUI>Never</WillShowUI>
@@ -118,9 +72,6 @@
     </component>
   </settings>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       Specialize Pass — Computername + Zeitzone
-       ═══════════════════════════════════════════════════════════ -->
   <settings pass="specialize">
     <component name="Microsoft-Windows-Shell-Setup"
                processorArchitecture="amd64"
@@ -132,9 +83,6 @@
     </component>
   </settings>
 
-  <!-- ═══════════════════════════════════════════════════════════
-       OOBE Pass — Administrator + WinRM aktivieren
-       ═══════════════════════════════════════════════════════════ -->
   <settings pass="oobeSystem">
     <component name="Microsoft-Windows-Shell-Setup"
                processorArchitecture="amd64"
@@ -144,13 +92,11 @@
 
       <UserAccounts>
         <AdministratorPassword>
-          <!-- Muss mit winrm_password in windows-2025.pkr.hcl übereinstimmen -->
           <Value>Packer2025!</Value>
           <PlainText>true</PlainText>
         </AdministratorPassword>
       </UserAccounts>
 
-      <!-- Automatischer Login damit FirstLogonCommands ausgeführt werden -->
       <AutoLogon>
         <Password>
           <Value>Packer2025!</Value>
@@ -161,7 +107,6 @@
         <LogonCount>3</LogonCount>
       </AutoLogon>
 
-      <!-- WinRM aktivieren damit Packer sich verbinden kann -->
       <FirstLogonCommands>
         <SynchronousCommand wcm:action="add">
           <Order>1</Order>
@@ -170,7 +115,7 @@
         </SynchronousCommand>
         <SynchronousCommand wcm:action="add">
           <Order>2</Order>
-          <Description>Windows Update deaktivieren (während Build)</Description>
+          <Description>Windows Update deaktivieren</Description>
           <CommandLine>powershell -Command "Set-Service wuauserv -StartupType Disabled; Stop-Service wuauserv -Force"</CommandLine>
         </SynchronousCommand>
       </FirstLogonCommands>

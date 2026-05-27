@@ -112,9 +112,8 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  # "Press any key to boot from CD..." Fenster erscheint kurz nach POST
-  boot_wait    = "3s"
-  boot_command = ["<spacebar><enter><spacebar><enter><spacebar><enter>"]
+  boot_wait    = "10s"
+  boot_command = ["<enter>"]
 
   # Template in Proxmox
   template_name        = "windows-server-2025"
