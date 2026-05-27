@@ -91,14 +91,11 @@ source "proxmox-iso" "windows-2025" {
   memory   = 4096
   os       = "win11"
 
-  scsi_controller = "virtio-scsi-single"
-
   disks {
     disk_size    = "60G"
     storage_pool = var.storage
-    type         = "scsi"
+    type         = "sata"
     cache_mode   = "writeback"
-    io_thread    = true
     discard      = true
   }
 

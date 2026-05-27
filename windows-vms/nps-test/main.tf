@@ -44,10 +44,9 @@ resource "proxmox_virtual_environment_vm" "nps_test" {
   # Disk-Grösse auf gewünschten Wert setzen (Template hat 60G, kann vergrössert werden)
   disk {
     datastore_id = var.storage
-    interface    = "scsi0"
+    interface    = "sata0"
     size         = var.disk_size
     discard      = "on"
-    iothread     = true
   }
 
   network_device {
