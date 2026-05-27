@@ -7,7 +7,7 @@ proxmox_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 proxmox_node         = "pve"
 storage              = "local-lvm"
 
-# ISO-Name in Proxmox (local:iso/) — Grossbuchstaben beachten
+# Original Windows ISO in Proxmox (local:iso/) — Grossbuchstaben beachten
 windows_iso = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
 
 # Administrator-Passwort für das Template

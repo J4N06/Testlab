@@ -34,7 +34,7 @@ variable "storage" {
 
 variable "windows_iso" {
   type    = string
-  default = "windows-server-2025-autounattend.iso"
+  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
 }
 
 variable "vm_password" {
@@ -53,10 +53,19 @@ source "proxmox-iso" "windows-2025" {
   vm_id   = 9000
   vm_name = "windows-server-2025"
 
-  # autounattend.xml ist direkt im ISO eingebettet — kein extra CD nötig
+  # Original Windows ISO — unverändert, bootet zuverlässig
   iso_file         = "local:iso/${var.windows_iso}"
   iso_storage_pool = "local"
   unmount_iso      = true
+
+  # autounattend.xml auf separater kleiner ISO (sata1)
+  additional_iso_files {
+    iso_file         = "local:iso/autounattend.iso"
+    iso_storage_pool = "local"
+    unmount          = true
+    type             = "sata"
+    index            = 1
+  }
 
   machine  = "q35"
 
@@ -73,9 +82,10 @@ source "proxmox-iso" "windows-2025" {
     discard      = true
   }
 
+  # e1000: eingebaute Windows-Treiber → WinRM funktioniert ohne extra Treiber-ISO
   network_adapters {
     bridge = "vmbr0"
-    model  = "virtio"
+    model  = "e1000"
   }
 
   communicator   = "winrm"
@@ -85,8 +95,9 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  boot_wait    = "3s"
-  boot_command = ["<enter>"]
+  # SeaBIOS: etfsboot.com im Windows-ISO startet zuverlässig
+  boot_wait    = "5s"
+  boot_command = ["<spacebar>"]
 
   template_name        = "windows-server-2025"
   template_description = "Windows Server 2025 Standard (Desktop Experience) | Packer Build"
