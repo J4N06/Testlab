@@ -1,0 +1,16 @@
+# Kopieren nach variables.pkrvars.hcl und anpassen (nie ins Git!)
+# Verwendung: packer build -var-file="variables.pkrvars.hcl" windows-2025.pkr.hcl
+
+proxmox_url          = "https://192.168.2.12:8006"
+proxmox_token_id     = "root@pam!packer"
+proxmox_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+proxmox_node         = "pve"
+storage              = "local-lvm"
+
+# ISO-Namen in Proxmox (local:iso/)
+windows_iso = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.iso"
+virtio_iso  = "virtio-win.iso"
+
+# Administrator-Passwort für das Template
+# Muss mit dem Wert in autounattend.xml übereinstimmen (Packer2025!)
+vm_password = "Packer2025!"

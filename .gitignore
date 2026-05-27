@@ -1,11 +1,13 @@
 # Claude
 .claude
 
-# Terraform
+# Terraform / Packer
 **/.terraform/
 **/*.tfstate
 **/*.tfstate.backup
 **/terraform.tfvars
+**/variables.pkrvars.hcl
+**/packer_cache/
 
 # Ansible
 **/kubeconfig

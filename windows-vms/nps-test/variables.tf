@@ -64,14 +64,8 @@ variable "disk_size" {
   default     = 60
 }
 
-variable "windows_iso" {
-  description = "Dateiname des Windows Server ISOs in local:iso/"
-  type        = string
-  default     = "windows-server-2022.iso"
-}
-
-variable "virtio_iso" {
-  description = "Dateiname des VirtIO Treiber ISOs in local:iso/"
-  type        = string
-  default     = "virtio-win.iso"
+variable "template_vm_id" {
+  description = "VM-ID des Packer-Templates (windows-server-2025, erstellt von windows-vms/packer/)"
+  type        = number
+  default     = 9000
 }

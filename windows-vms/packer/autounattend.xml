@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       WindowsPE Pass — Treiber laden + Disk konfigurieren + Edition wählen
+       ═══════════════════════════════════════════════════════════ -->
+  <settings pass="windowsPE">
+
+    <!-- VirtIO Treiber laden damit die virtuelle Disk sichtbar ist -->
+    <component name="Microsoft-Windows-PnpCustomizationsWinPE"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+      <DriverPaths>
+        <!-- VirtIO SCSI Disk Treiber — mehrere Laufwerksbuchstaben da Zuweisung variiert -->
+        <PathAndCredentials wcm:action="add" wcm:keyValue="1">
+          <Path>D:\viostor\2k25\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="2">
+          <Path>E:\viostor\2k25\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="3">
+          <Path>F:\viostor\2k25\amd64</Path>
+        </PathAndCredentials>
+        <!-- VirtIO Netzwerk Treiber -->
+        <PathAndCredentials wcm:action="add" wcm:keyValue="4">
+          <Path>D:\NetKVM\2k25\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="5">
+          <Path>E:\NetKVM\2k25\amd64</Path>
+        </PathAndCredentials>
+        <PathAndCredentials wcm:action="add" wcm:keyValue="6">
+          <Path>F:\NetKVM\2k25\amd64</Path>
+        </PathAndCredentials>
+      </DriverPaths>
+    </component>
+
+    <component name="Microsoft-Windows-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS"
+               xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State">
+
+      <!-- Windows Server 2025 Standard (Desktop Experience) auswählen
+           Index prüfen: dism /get-imageinfo /imagefile:D:\sources\install.wim
+           1 = Standard Core | 2 = Standard Desktop | 3 = DC Core | 4 = DC Desktop -->
+      <ImageInstall>
+        <OSImage>
+          <InstallTo>
+            <DiskID>0</DiskID>
+            <PartitionID>3</PartitionID>
+          </InstallTo>
+          <InstallFrom>
+            <MetaData wcm:action="add">
+              <Key>/IMAGE/INDEX</Key>
+              <Value>2</Value>
+            </MetaData>
+          </InstallFrom>
+        </OSImage>
+      </ImageInstall>
+
+      <!-- Disk partitionieren (GPT/UEFI) -->
+      <DiskConfiguration>
+        <Disk wcm:action="add">
+          <DiskID>0</DiskID>
+          <WillWipeDisk>true</WillWipeDisk>
+          <CreatePartitions>
+            <!-- EFI System Partition -->
+            <CreatePartition wcm:action="add">
+              <Order>1</Order>
+              <Type>EFI</Type>
+              <Size>260</Size>
+            </CreatePartition>
+            <!-- Microsoft Reserved Partition -->
+            <CreatePartition wcm:action="add">
+              <Order>2</Order>
+              <Type>MSR</Type>
+              <Size>16</Size>
+            </CreatePartition>
+            <!-- Windows Partition (Rest der Disk) -->
+            <CreatePartition wcm:action="add">
+              <Order>3</Order>
+              <Type>Primary</Type>
+              <Extend>true</Extend>
+            </CreatePartition>
+          </CreatePartitions>
+          <ModifyPartitions>
+            <ModifyPartition wcm:action="add">
+              <Order>1</Order>
+              <PartitionID>1</PartitionID>
+              <Format>FAT32</Format>
+              <Label>System</Label>
+            </ModifyPartition>
+            <ModifyPartition wcm:action="add">
+              <Order>2</Order>
+              <PartitionID>3</PartitionID>
+              <Format>NTFS</Format>
+              <Label>Windows</Label>
+              <Letter>C</Letter>
+            </ModifyPartition>
+          </ModifyPartitions>
+        </Disk>
+      </DiskConfiguration>
+
+      <UserData>
+        <!-- KMS Client Key für Windows Server 2025 Standard (öffentlicher GVLK Key) -->
+        <ProductKey>
+          <Key>TVRH6-WHNXV-R9WG3-9XRFY-MY832</Key>
+          <WillShowUI>Never</WillShowUI>
+        </ProductKey>
+        <AcceptEula>true</AcceptEula>
+      </UserData>
+
+    </component>
+  </settings>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       Specialize Pass — Computername + Zeitzone
+       ═══════════════════════════════════════════════════════════ -->
+  <settings pass="specialize">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
+      <ComputerName>windows-template</ComputerName>
+      <TimeZone>W. Europe Standard Time</TimeZone>
+    </component>
+  </settings>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       OOBE Pass — Administrator + WinRM aktivieren
+       ═══════════════════════════════════════════════════════════ -->
+  <settings pass="oobeSystem">
+    <component name="Microsoft-Windows-Shell-Setup"
+               processorArchitecture="amd64"
+               publicKeyToken="31bf3856ad364e35"
+               language="neutral"
+               versionScope="nonSxS">
+
+      <UserAccounts>
+        <AdministratorPassword>
+          <!-- Muss mit winrm_password in windows-2025.pkr.hcl übereinstimmen -->
+          <Value>Packer2025!</Value>
+          <PlainText>true</PlainText>
+        </AdministratorPassword>
+      </UserAccounts>
+
+      <!-- Automatischer Login damit FirstLogonCommands ausgeführt werden -->
+      <AutoLogon>
+        <Password>
+          <Value>Packer2025!</Value>
+          <PlainText>true</PlainText>
+        </Password>
+        <Username>Administrator</Username>
+        <Enabled>true</Enabled>
+        <LogonCount>3</LogonCount>
+      </AutoLogon>
+
+      <!-- WinRM aktivieren damit Packer sich verbinden kann -->
+      <FirstLogonCommands>
+        <SynchronousCommand wcm:action="add">
+          <Order>1</Order>
+          <Description>WinRM aktivieren</Description>
+          <CommandLine>powershell -ExecutionPolicy Bypass -Command "Enable-PSRemoting -Force; Set-Item WSMan:\localhost\Service\AllowUnencrypted $true; Set-Item WSMan:\localhost\Service\Auth\Basic $true; New-NetFirewallRule -DisplayName 'WinRM HTTP' -Direction Inbound -Protocol TCP -LocalPort 5985 -Action Allow -Profile Any"</CommandLine>
+        </SynchronousCommand>
+        <SynchronousCommand wcm:action="add">
+          <Order>2</Order>
+          <Description>Windows Update deaktivieren (während Build)</Description>
+          <CommandLine>powershell -Command "Set-Service wuauserv -StartupType Disabled; Stop-Service wuauserv -Force"</CommandLine>
+        </SynchronousCommand>
+      </FirstLogonCommands>
+
+      <OOBE>
+        <HideEULAPage>true</HideEULAPage>
+        <HideLocalAccountScreen>true</HideLocalAccountScreen>
+        <HideOEMRegistrationScreen>true</HideOEMRegistrationScreen>
+        <HideOnlineAccountScreens>true</HideOnlineAccountScreens>
+        <HideWirelessSetupInOOBE>true</HideWirelessSetupInOOBE>
+        <SkipMachineOOBE>true</SkipMachineOOBE>
+        <SkipUserOOBE>true</SkipUserOOBE>
+        <ProtectYourPC>3</ProtectYourPC>
+      </OOBE>
+
+    </component>
+  </settings>
+
+</unattend>

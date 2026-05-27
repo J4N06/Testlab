@@ -1,10 +1,11 @@
 # NPS Test-VM
 
-Windows Server 2022 VM auf Proxmox für RADIUS Zertifikat-Tests.
+Windows Server 2025 VM auf Proxmox für RADIUS Zertifikat-Tests.  
+Die VM wird aus dem Packer-Template geklont — kein manuelles Windows-Setup nötig.
 
 ```
 windows-vms/nps-test/
-├── main.tf / variables.tf / outputs.tf   # Proxmox VM
+├── main.tf / variables.tf / outputs.tf   # Proxmox VM (Template-Clone)
 ├── apply.sh / destroy.sh                 # SSH-Agent Wrapper
 ├── terraform.tfvars.example              # Vorlage (terraform.tfvars nicht ins Git!)
 └── ansible/
@@ -19,61 +20,48 @@ windows-vms/nps-test/
 
 ## Voraussetzungen
 
-ISOs in Proxmox unter `local:iso/` hochladen (**Datacenter → local → ISO Images → Upload**):
+Das Windows Server 2025 Template muss zuerst mit Packer erstellt werden:
 
-| ISO | Download |
-|---|---|
-| Windows Server 2022 Evaluation | https://www.microsoft.com/evalcenter/evaluate-windows-server-2022 |
-| VirtIO Treiber | https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/stable-virtio/virtio-win.iso |
+**→ [Packer Template erstellen](../packer/README.md)**
 
 ---
 
-## Schritt 1 — VM erstellen
+## Schritt 1 — VM aus Template klonen
 
 ```bash
 cd windows-vms/nps-test
 
 cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvars anpassen (Proxmox-Token, ISO-Namen, IP)
+# terraform.tfvars anpassen (Proxmox-Token, template_vm_id=9000, IP)
 
 terraform init
 bash apply.sh
 ```
 
----
-
-## Schritt 2 — Windows installieren
-
-1. **Proxmox Web-UI → VM 300 → Console** öffnen
-2. Windows Server 2022 installieren (~20 Min)
-   - Edition: **Standard (Desktop Experience)**
-   - Disk nicht sichtbar? → **Treiber laden** → Laufwerk D: → `viostor\2k22\amd64`
-3. Administrator-Passwort setzen — notieren!
-4. IP statisch setzen: `192.168.2.30 / 255.255.255.0 / GW: 192.168.2.1`
-5. VirtIO Gast-Tools installieren: Laufwerk D: → `virtio-win-gt-x64.msi`
+Terraform klont das Packer-Template (VM-ID 9000) als neue VM.  
+Windows startet sofort — kein Installations-Assistent.
 
 ---
 
-## Schritt 3 — WinRM Bootstrap (einmalig in Proxmox-Konsole)
+## Schritt 2 — IP statisch setzen
 
-In der VM-Konsole als Administrator:
+Nach dem ersten Boot in der Proxmox-Konsole als Administrator:
 
 ```powershell
-winrm quickconfig -force
-winrm set winrm/config/service/auth '@{Basic="true"}'
-winrm set winrm/config/service '@{AllowUnencrypted="true"}'
+New-NetIPAddress -InterfaceAlias "Ethernet" -IPAddress 192.168.2.30 -PrefixLength 24 -DefaultGateway 192.168.2.1
+Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses 192.168.2.1
 ```
 
 ---
 
-## Schritt 4 — Ansible: NPS + WinRM HTTPS einrichten
+## Schritt 3 — Ansible: NPS + WinRM HTTPS einrichten
 
 ```bash
 # Ansible Collections installieren (einmalig)
 ansible-galaxy collection install ansible.windows community.windows
 
-# Passwort als Umgebungsvariable
-export WINDOWS_ADMIN_PASS="DAS-ADMINISTRATOR-PASSWORT"
+# Passwort als Umgebungsvariable (Packer2025! oder nach Sysprep neu gesetzt)
+export WINDOWS_ADMIN_PASS="Packer2025!"
 
 # Verbindung testen
 ansible windows -m ansible.windows.win_ping
@@ -90,7 +78,7 @@ Ansible installiert:
 
 ---
 
-## Schritt 5 — RADIUS Cert Automation testen
+## Schritt 4 — RADIUS Cert Automation testen
 
 ```bash
 # Kubernetes Secret erstellen

@@ -16,8 +16,9 @@ Testlab/
 │   ├── customers/               # Pro-Kunden-Konfiguration
 │   └── windows/                 # PowerShell-Hilfsskripte
 └── windows-vms/                 # Windows VMs auf Proxmox
+    ├── packer/                  # Windows Server 2025 Template (vollautomatisch)
     └── nps-test/                # NPS Test-Server
-        ├── main.tf              # VM erstellen
+        ├── main.tf              # VM klonen (aus Packer-Template)
         └── ansible/             # Windows konfigurieren
 ```
 
@@ -62,12 +63,15 @@ Automatisches TLS-Zertifikat-Deployment für Windows NPS (RADIUS) Server:
 
 ### windows-vms
 
-Windows Server VMs auf Proxmox — Terraform erstellt die VM, Ansible konfiguriert sie.
+Windows Server VMs auf Proxmox.  
+**Packer** erstellt ein vollautomatisches Template, **Terraform** klont daraus VMs, **Ansible** konfiguriert sie.
 
-| VM | Zweck | IP |
-|---|---|---|
-| nps-test | Windows NPS Server für RADIUS-Tests | 192.168.2.30 |
+| Komponente | Beschreibung |
+|---|---|
+| packer/ | Erstellt Windows Server 2025 Template (vollautomatisch via autounattend.xml) |
+| nps-test/ | Windows NPS Server für RADIUS-Tests (IP: 192.168.2.30) |
 
-**→ [Zur Anleitung](windows-vms/nps-test/README.md)**
+**→ [Packer Template](windows-vms/packer/README.md)**  
+**→ [NPS Test-VM](windows-vms/nps-test/README.md)**
 
 ---

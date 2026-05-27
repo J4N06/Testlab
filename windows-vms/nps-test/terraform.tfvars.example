@@ -5,13 +5,12 @@ proxmox_node      = "pve"
 storage           = "local-lvm"
 bridge            = "vmbr0"
 
-vm_name     = "nps-test"
-vm_id       = 300
-vm_ip       = "192.168.2.30"
-vm_cores    = 4
-vm_memory   = 4096
-disk_size   = 60
+vm_name        = "nps-test"
+vm_id          = 300
+vm_ip          = "192.168.2.30"
+vm_cores       = 4
+vm_memory      = 4096
+disk_size      = 60
 
-# Dateinamen der ISOs in Proxmox (local:iso/)
-windows_iso = "windows-server-2022.iso"
-virtio_iso  = "virtio-win.iso"
+# VM-ID des Packer-Templates (windows-vms/packer/ → Packer Build ausführen)
+template_vm_id = 9000
