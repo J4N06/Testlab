@@ -57,7 +57,7 @@
         <OSImage>
           <InstallTo>
             <DiskID>0</DiskID>
-            <PartitionID>3</PartitionID>
+            <PartitionID>2</PartitionID>
           </InstallTo>
           <InstallFrom>
             <MetaData wcm:action="add">
@@ -68,27 +68,21 @@
         </OSImage>
       </ImageInstall>
 
-      <!-- Disk partitionieren (GPT/UEFI) -->
+      <!-- Disk partitionieren (MBR/BIOS — kompatibel mit SeaBIOS in Proxmox) -->
       <DiskConfiguration>
         <Disk wcm:action="add">
           <DiskID>0</DiskID>
           <WillWipeDisk>true</WillWipeDisk>
           <CreatePartitions>
-            <!-- EFI System Partition -->
+            <!-- System Reserved (Boot) -->
             <CreatePartition wcm:action="add">
               <Order>1</Order>
-              <Type>EFI</Type>
-              <Size>260</Size>
-            </CreatePartition>
-            <!-- Microsoft Reserved Partition -->
-            <CreatePartition wcm:action="add">
-              <Order>2</Order>
-              <Type>MSR</Type>
-              <Size>16</Size>
+              <Type>Primary</Type>
+              <Size>500</Size>
             </CreatePartition>
             <!-- Windows Partition (Rest der Disk) -->
             <CreatePartition wcm:action="add">
-              <Order>3</Order>
+              <Order>2</Order>
               <Type>Primary</Type>
               <Extend>true</Extend>
             </CreatePartition>
@@ -97,12 +91,13 @@
             <ModifyPartition wcm:action="add">
               <Order>1</Order>
               <PartitionID>1</PartitionID>
-              <Format>FAT32</Format>
-              <Label>System</Label>
+              <Format>NTFS</Format>
+              <Label>System Reserved</Label>
+              <Active>true</Active>
             </ModifyPartition>
             <ModifyPartition wcm:action="add">
               <Order>2</Order>
-              <PartitionID>3</PartitionID>
+              <PartitionID>2</PartitionID>
               <Format>NTFS</Format>
               <Label>Windows</Label>
               <Letter>C</Letter>
