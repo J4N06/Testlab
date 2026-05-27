@@ -64,8 +64,8 @@ source "proxmox-iso" "windows-2025" {
   additional_iso_files {
     iso_file         = "local:iso/autounattend.iso"
     iso_storage_pool = "local"
-    type             = "ide"
-    index            = 3
+    type             = "sata"
+    index            = 1
     unmount          = true
   }
 

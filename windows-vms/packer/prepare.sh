@@ -17,7 +17,7 @@ command -v genisoimage &>/dev/null || CMD="mkisofs"
 
 echo "Erstelle autounattend.iso..."
 $CMD -o "$ISO_DIR/autounattend.iso" \
-  -J -r -input-charset utf-8 \
+  -J \
   -V "Autounattend" \
   "$SCRIPT_DIR/autounattend.xml"
 
