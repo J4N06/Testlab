@@ -35,12 +35,7 @@ variable "storage" {
 
 variable "windows_iso" {
   type    = string
-  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.iso"
-}
-
-variable "virtio_iso" {
-  type    = string
-  default = "virtio-win-0.1.285.iso"
+  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
 }
 
 variable "vm_password" {
@@ -60,37 +55,30 @@ source "proxmox-iso" "windows-2025" {
   vm_id   = 9000
   vm_name = "windows-server-2025"
 
-  # Windows Server 2025 ISO — primäres Boot-Gerät (IDE, wird zuerst gebootet)
+  # Windows ISO → geht automatisch auf ide2
+  # ide0 + ide1 bleiben leer → SeaBIOS bootet direkt von ide2
   iso_file         = "local:iso/${var.windows_iso}"
   iso_storage_pool = "local"
   unmount_iso      = true
 
   additional_iso_files {
-    # Autounattend ISO — auf SATA damit IDE-Bootreihenfolge nicht gestört wird
+    # Autounattend auf ide3 (nach Windows ISO auf ide2, stört Boot nicht)
     # einmalig erstellen mit: bash prepare.sh
     iso_file         = "local:iso/autounattend.iso"
     iso_storage_pool = "local"
-    type             = "sata"
-    index            = 0
+    type             = "ide"
+    index            = 3
     unmount          = true
   }
 
-  additional_iso_files {
-    # VirtIO Treiber — auf SATA
-    iso_file         = "local:iso/${var.virtio_iso}"
-    iso_storage_pool = "local"
-    type             = "sata"
-    index            = 1
-    unmount          = true
-  }
-
-  # Hardware (q35 = beste Windows-Kompatibilität)
+  # Hardware
   machine  = "q35"
   cpu_type = "x86-64-v2-AES"
   cores    = 4
   memory   = 4096
   os       = "win11"
 
+  # SATA Disk — kein VirtIO-Treiber in WinPE nötig (AHCI eingebaut)
   disks {
     disk_size    = "60G"
     storage_pool = var.storage
@@ -104,7 +92,6 @@ source "proxmox-iso" "windows-2025" {
     model  = "virtio"
   }
 
-  # WinRM (wird von autounattend.xml aktiviert, Packer verbindet sich damit)
   communicator   = "winrm"
   winrm_username = "Administrator"
   winrm_password = var.vm_password
@@ -112,10 +99,10 @@ source "proxmox-iso" "windows-2025" {
   winrm_insecure = true
   winrm_timeout  = "90m"
 
-  boot_wait    = "10s"
+  # "Press any key" Fenster erscheint ~1s nach POST, dauert ~5s
+  boot_wait    = "3s"
   boot_command = ["<enter>"]
 
-  # Template in Proxmox
   template_name        = "windows-server-2025"
   template_description = "Windows Server 2025 Standard (Desktop Experience) | Packer Build"
 }
@@ -124,12 +111,9 @@ source "proxmox-iso" "windows-2025" {
 build {
   sources = ["source.proxmox-iso.windows-2025"]
 
-  # VirtIO Tools, WinRM HTTPS, Cleanup
+  # WinRM HTTPS, Cleanup (VirtIO Tools optional — ISO nicht mehr eingebunden)
   provisioner "powershell" {
     script = "scripts/setup.ps1"
-    environment_vars = [
-      "VIRTIO_DRIVE=E:"
-    ]
   }
 
   # Sysprep → VM fährt herunter → Packer erstellt Template
