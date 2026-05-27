@@ -1,24 +1,30 @@
 #!/bin/bash
-# Einmalig ausführen bevor packer build
-# Erstellt autounattend.iso und legt es direkt ins Proxmox ISO-Verzeichnis
+# Einmalig ausführen (oder nach Änderungen an autounattend.xml)
+# Injiziert autounattend.xml in eine Kopie des Windows-ISO
 
 set -e
 
 ISO_DIR="/var/lib/vz/template/iso"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if ! command -v genisoimage &>/dev/null && ! command -v mkisofs &>/dev/null; then
-  echo "Installiere genisoimage..."
-  apt-get install -y genisoimage
+WIN_ISO="${ISO_DIR}/SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
+OUT_ISO="${ISO_DIR}/windows-server-2025-autounattend.iso"
+
+if [ ! -f "$WIN_ISO" ]; then
+  echo "FEHLER: Windows ISO nicht gefunden: $WIN_ISO"
+  exit 1
 fi
 
-CMD="genisoimage"
-command -v genisoimage &>/dev/null || CMD="mkisofs"
+if ! command -v xorriso &>/dev/null; then
+  echo "Installiere xorriso..."
+  apt-get install -y xorriso
+fi
 
-echo "Erstelle autounattend.iso..."
-$CMD -o "$ISO_DIR/autounattend.iso" \
-  -J \
-  -V "Autounattend" \
-  "$SCRIPT_DIR/autounattend.xml"
+echo "Erstelle $OUT_ISO (~5 GB, dauert 1-2 Minuten)..."
+xorriso \
+  -indev "$WIN_ISO" \
+  -outdev "$OUT_ISO" \
+  -map "$SCRIPT_DIR/autounattend.xml" /autounattend.xml \
+  --
 
-echo "Fertig: $ISO_DIR/autounattend.iso"
+echo "Fertig: $OUT_ISO"

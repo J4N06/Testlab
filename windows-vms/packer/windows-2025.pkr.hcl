@@ -35,7 +35,7 @@ variable "storage" {
 
 variable "windows_iso" {
   type    = string
-  default = "SW_DVD9_Win_Server_STD_CORE_2025_24H2_64Bit_English_DC_STD_MLF_X23-81891.ISO"
+  default = "windows-server-2025-autounattend.iso"
 }
 
 variable "vm_password" {
@@ -60,10 +60,6 @@ source "proxmox-iso" "windows-2025" {
   iso_file         = "local:iso/${var.windows_iso}"
   iso_storage_pool = "local"
   unmount_iso      = true
-
-  # Packer erstellt die CD automatisch aus autounattend.xml — kein prepare.sh nötig
-  cd_files = ["autounattend.xml"]
-  cd_label = "AUTOUNATTEND"
 
   # Hardware
   machine  = "q35"
