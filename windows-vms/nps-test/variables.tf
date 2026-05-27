@@ -13,7 +13,7 @@ variable "proxmox_api_token" {
 variable "proxmox_node" {
   description = "Proxmox Node-Name"
   type        = string
-  default     = "pve"
+  default     = "TESTLAB-PROX01"
 }
 
 variable "storage" {

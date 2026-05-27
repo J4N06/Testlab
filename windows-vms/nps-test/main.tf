@@ -44,7 +44,7 @@ resource "proxmox_virtual_environment_vm" "nps_test" {
   # Disk-Grösse auf gewünschten Wert setzen (Template hat 60G, kann vergrössert werden)
   disk {
     datastore_id = var.storage
-    interface    = "sata0"
+    interface    = "ide0"
     size         = var.disk_size
     discard      = "on"
   }
@@ -54,7 +54,7 @@ resource "proxmox_virtual_environment_vm" "nps_test" {
     model  = "virtio"
   }
 
-  boot_order = ["scsi0"]
+  boot_order = ["ide0"]
 
   # QEMU Guest Agent (VirtIO Gast-Tools sind im Template vorinstalliert)
   agent {

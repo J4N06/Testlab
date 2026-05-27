@@ -1,7 +1,7 @@
 # Kopieren nach terraform.tfvars und anpassen (nie ins Git!)
 proxmox_url       = "https://192.168.2.12:8006"
 proxmox_api_token = "root@pam!terraform=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-proxmox_node      = "pve"
+proxmox_node      = "TESTLAB-PROX01"
 storage           = "local-lvm"
 bridge            = "vmbr0"
 
