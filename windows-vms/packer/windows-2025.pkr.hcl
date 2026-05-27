@@ -1,7 +1,7 @@
 packer {
   required_plugins {
     proxmox = {
-      version = ">= 1.1.8"
+      version = ">= 1.2.0"
       source  = "github.com/hashicorp/proxmox"
     }
   }
@@ -61,23 +61,28 @@ source "proxmox-iso" "windows-2025" {
   vm_name = "windows-server-2025"
 
   # Windows Server 2025 ISO (Hauptinstallation)
-  iso_file         = "local:iso/${var.windows_iso}"
-  iso_storage_pool = "local"
-  unmount_iso      = true
+  boot_iso {
+    iso_file         = "local:iso/${var.windows_iso}"
+    iso_storage_pool = "local"
+    unmount          = true
+  }
 
   additional_iso_files {
     # Autounattend Answer File — Windows Setup findet es automatisch auf allen Laufwerken
-    cd_files = ["./autounattend.xml"]
-    cd_label = "Autounattend"
-    device   = "ide0"
-    unmount  = true
+    cd_files         = ["./autounattend.xml"]
+    cd_label         = "Autounattend"
+    cd_storage_pool  = "local"
+    type             = "ide"
+    index            = 0
+    unmount          = true
   }
 
   additional_iso_files {
     # VirtIO Treiber — nötig damit Windows die virtuelle Disk sieht
     iso_file         = "local:iso/${var.virtio_iso}"
     iso_storage_pool = "local"
-    device           = "ide1"
+    type             = "ide"
+    index            = 1
     unmount          = true
   }
 
@@ -89,12 +94,13 @@ source "proxmox-iso" "windows-2025" {
   os       = "win11"
 
   disks {
-    disk_size    = "60G"
-    storage_pool = var.storage
-    type         = "scsi"
-    cache_mode   = "writeback"
-    io_thread    = true
-    discard      = true
+    disk_size       = "60G"
+    storage_pool    = var.storage
+    type            = "scsi"
+    cache_mode      = "writeback"
+    io_thread       = true
+    discard         = true
+    controller_type = "virtio-scsi-single"
   }
 
   network_adapters {
