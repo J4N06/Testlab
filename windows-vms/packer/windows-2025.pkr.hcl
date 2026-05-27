@@ -61,13 +61,9 @@ source "proxmox-iso" "windows-2025" {
   iso_storage_pool = "local"
   unmount_iso      = true
 
-  additional_iso_files {
-    iso_file         = "local:iso/autounattend.iso"
-    iso_storage_pool = "local"
-    type             = "sata"
-    index            = 1
-    unmount          = true
-  }
+  # Packer erstellt die CD automatisch aus autounattend.xml — kein prepare.sh nötig
+  cd_files = ["autounattend.xml"]
+  cd_label = "AUTOUNATTEND"
 
   # Hardware
   machine  = "q35"
