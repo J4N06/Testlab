@@ -8,7 +8,9 @@
       "Bash(mkdir -p \"c:/GitHub/Testlab/windows-vms/nps-test\" && mv \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform/\"* \"c:/GitHub/Testlab/windows-vms/nps-test/\" && rmdir \"c:/GitHub/Testlab/radius-cert-automation/test-vm/terraform\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(cd \"c:\\\\GitHub\\\\Testlab\\\\windows-vms\\\\packer\" && grep -r \"cd_storage_pool\\\\|controller_type\\\\|scsi_controller\\\\|iso_storage_pool\" \"c:\\\\Users\\\\jan.birchler\\\\.config\\\\packer\\\\plugins\" 2>/dev/null | head -20 || echo \"plugins not local\")",
+      "Read(//c/Users/jan.birchler/.config/packer/**)"
     ],
     "additionalDirectories": [
       "\\mnt\\c\\GitHub\\Testlab\\k3s-ansible",
