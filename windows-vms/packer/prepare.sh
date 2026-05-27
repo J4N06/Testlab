@@ -61,12 +61,10 @@ echo "   EFI  Boot: ${EFI_BOOT:-nicht gefunden}"
 
 [ -z "$BIOS_BOOT" ] && { echo "FEHLER: boot/etfsboot.com nicht im ISO gefunden!"; exit 1; }
 
-BOOT_PARAMS="-b '$BIOS_BOOT' -no-emul-boot -boot-load-size 8 -boot-info-table --boot-catalog-hide"
+BOOT_PARAMS="-b '$BIOS_BOOT' -no-emul-boot -boot-load-size 8 -boot-info-table"
 [ -n "$EFI_BOOT" ] && BOOT_PARAMS="$BOOT_PARAMS --eltorito-alt-boot -e '$EFI_BOOT' -no-emul-boot"
 
 eval "xorriso -as mkisofs \
-  -iso-level 4 \
-  -full-iso9660-filenames \
   -J -joliet-long \
   -V '$VOL_LABEL' \
   $BOOT_PARAMS \
