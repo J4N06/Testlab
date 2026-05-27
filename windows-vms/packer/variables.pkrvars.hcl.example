@@ -1,7 +1,7 @@
 # Kopieren nach variables.pkrvars.hcl und anpassen (nie ins Git!)
 # Verwendung: packer build -var-file="variables.pkrvars.hcl" windows-2025.pkr.hcl
 
-proxmox_url          = "https://192.168.2.12:8006"
+proxmox_url          = "https://192.168.2.12:8006/api2/json"
 proxmox_token_id     = "root@pam!packer"
 proxmox_token_secret = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 proxmox_node         = "pve"

@@ -10,7 +10,7 @@ packer {
 # ─── Variablen ────────────────────────────────────────────────────────────────
 variable "proxmox_url" {
   type    = string
-  default = "https://192.168.2.12:8006"
+  default = "https://192.168.2.12:8006/api2/json"
 }
 
 variable "proxmox_token_id" {
