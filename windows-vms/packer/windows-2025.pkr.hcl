@@ -61,16 +61,6 @@ source "proxmox-iso" "windows-2025" {
   iso_storage_pool = "local"
   unmount_iso      = true
 
-  additional_iso_files {
-    # Autounattend auf ide3 (nach Windows ISO auf ide2, stört Boot nicht)
-    # einmalig erstellen mit: bash prepare.sh
-    iso_file         = "local:iso/autounattend.iso"
-    iso_storage_pool = "local"
-    type             = "ide"
-    index            = 3
-    unmount          = true
-  }
-
   # Hardware
   machine  = "q35"
   cpu_type = "x86-64-v2-AES"
