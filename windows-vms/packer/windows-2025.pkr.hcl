@@ -114,10 +114,6 @@ source "proxmox-iso" "windows-2025" {
   boot_wait    = "5s"
   boot_command = ["<enter>"]
 
-  # Sysprep am Ende → VM fährt herunter → Packer erstellt Template
-  shutdown_command = "powershell -Command \"Start-Process 'C:\\Windows\\System32\\Sysprep\\sysprep.exe' -ArgumentList '/generalize /oobe /shutdown /quiet' -Wait\""
-  shutdown_timeout = "30m"
-
   # Template in Proxmox
   template_name        = "windows-server-2025"
   template_description = "Windows Server 2025 Standard (Desktop Experience) | Packer Build"
@@ -133,5 +129,13 @@ build {
     environment_vars = [
       "VIRTIO_DRIVE=E:"
     ]
+  }
+
+  # Sysprep → VM fährt herunter → Packer erstellt Template
+  provisioner "powershell" {
+    inline = [
+      "Start-Process 'C:\\Windows\\System32\\Sysprep\\sysprep.exe' -ArgumentList '/generalize /oobe /shutdown /quiet' -Wait"
+    ]
+    timeout = "30m"
   }
 }
