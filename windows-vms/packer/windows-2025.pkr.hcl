@@ -61,6 +61,14 @@ source "proxmox-iso" "windows-2025" {
   iso_storage_pool = "local"
   unmount_iso      = true
 
+  additional_iso_files {
+    iso_file         = "local:iso/autounattend.iso"
+    iso_storage_pool = "local"
+    type             = "ide"
+    index            = 3
+    unmount          = true
+  }
+
   # Hardware
   machine  = "q35"
   cpu_type = "x86-64-v2-AES"
