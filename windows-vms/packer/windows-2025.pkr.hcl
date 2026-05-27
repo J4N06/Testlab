@@ -68,9 +68,8 @@ source "proxmox-iso" "windows-2025" {
   }
 
   additional_iso_files {
-    # Autounattend Answer File — Windows Setup findet es automatisch auf allen Laufwerken
-    cd_files         = ["./autounattend.xml"]
-    cd_label         = "Autounattend"
+    # Autounattend ISO — einmalig erstellen mit: bash prepare.sh
+    iso_file         = "local:iso/autounattend.iso"
     iso_storage_pool = "local"
     type             = "ide"
     index            = 0
