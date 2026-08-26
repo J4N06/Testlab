@@ -30,6 +30,62 @@
     port: "{{ k3s_api_port }}"
     timeout: 120
 
+- name: CoreDNS-Patch schreiben (erzwingt TCP zum Upstream-DNS)
+  ansible.builtin.copy:
+    dest: /tmp/coredns-forward-patch.yaml
+    mode: "0644"
+    content: |
+      data:
+        Corefile: |
+          .:53 {
+              errors
+              health
+              ready
+              kubernetes cluster.local in-addr.arpa ip6.arpa {
+                pods insecure
+                fallthrough in-addr.arpa ip6.arpa
+              }
+              hosts /etc/coredns/NodeHosts {
+                ttl 60
+                reload 15s
+                fallthrough
+              }
+              prometheus :9153
+              cache 30
+              loop
+              reload
+              loadbalance
+              import /etc/coredns/custom/*.override
+              forward . 8.8.8.8 8.8.4.4 {
+                  force_tcp
+              }
+          }
+          import /etc/coredns/custom/*.server
+
+- name: CoreDNS-Patch anwenden (nur Corefile-Key, NodeHosts bleibt unangetastet)
+  ansible.builtin.command:
+    cmd: kubectl -n kube-system patch configmap coredns --type merge --patch-file=/tmp/coredns-forward-patch.yaml
+  register: coredns_patch
+  changed_when: "'patched' in coredns_patch.stdout"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: CoreDNS neu starten damit der Patch greift
+  ansible.builtin.command:
+    cmd: kubectl -n kube-system rollout restart deployment coredns
+  when: coredns_patch.changed
+  changed_when: true
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Warten bis CoreDNS wieder bereit ist
+  ansible.builtin.command:
+    cmd: kubectl -n kube-system rollout status deployment coredns --timeout=120s
+  when: coredns_patch.changed
+  changed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
 - name: k3s Node-Token auslesen
   ansible.builtin.slurp:
     src: /var/lib/rancher/k3s/server/node-token
