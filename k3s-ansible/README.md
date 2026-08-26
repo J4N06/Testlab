@@ -139,9 +139,16 @@ Proxmox Web-UI → **Datacenter → API Tokens → Add**
 |---|---|
 | User | `root@pam` |
 | Token ID | `terraform` |
-| Privilege Separation | **nein** |
+| Privilege Separation | **nein** (Checkbox deaktivieren — ist standardmässig angehakt!) |
 
 Den angezeigten Secret-Wert kopieren — er wird nur **einmal** angezeigt.
+
+> **Fehler `403 Permission check failed` beim `terraform apply`:**
+> Das bedeutet, Privilege Separation ist doch noch aktiv (auch nach Neu-Erstellen des Tokens passiert das leicht, da die Checkbox jedes Mal wieder standardmässig an ist). Prüfen und beheben auf dem Proxmox-Host:
+> ```bash
+> pveum user token list root@pam          # Spalte "privsep" prüfen
+> pveum user token modify root@pam terraform --privsep 0
+> ```
 
 ---
 
