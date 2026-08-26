@@ -43,16 +43,31 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: Warten bis ArgoCD Application "kube-prometheus-stack" healthy ist
+- name: Warten bis ArgoCD den monitoring-Namespace angelegt hat
   ansible.builtin.command:
-    cmd: kubectl get application kube-prometheus-stack -n argocd -o jsonpath='{.status.health.status}'
-  register: app_health_status
-  until: app_health_status.stdout == 'Healthy'
+    cmd: kubectl get namespace monitoring
+  register: monitoring_ns
+  until: monitoring_ns.rc == 0
   retries: 30
   delay: 10
   changed_when: false
+  failed_when: false
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: ArgoCD Sync-Fehler anzeigen falls Namespace nie entstanden ist
+  ansible.builtin.command:
+    cmd: kubectl get application kube-prometheus-stack -n argocd -o jsonpath='{.status.conditions}'
+  register: app_conditions
+  changed_when: false
+  when: monitoring_ns.rc != 0
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Abbrechen mit ArgoCD-Fehlermeldung
+  ansible.builtin.fail:
+    msg: "monitoring-Namespace wurde nie von ArgoCD angelegt. ArgoCD-Status: {{ app_conditions.stdout }}"
+  when: monitoring_ns.rc != 0
 
 - name: Warten bis Grafana bereit ist
   ansible.builtin.command:
