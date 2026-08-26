@@ -16,6 +16,7 @@
     K3S_TOKEN="{{ k3s_node_token }}" \
     sh -s - agent \
       --node-ip="{{ ansible_host }}" \
+      --resolv-conf=/run/systemd/resolve/resolv.conf \
       --node-label="node-role=worker"
   args:
     executable: /bin/bash
