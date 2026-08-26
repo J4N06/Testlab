@@ -10,7 +10,7 @@
 
 - name: ArgoCD installieren
   ansible.builtin.command:
-    cmd: kubectl apply --server-side -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    cmd: kubectl apply --server-side --force-conflicts -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
   register: argocd_install
   changed_when: "'created' in argocd_install.stdout or 'configured' in argocd_install.stdout"
   environment:
