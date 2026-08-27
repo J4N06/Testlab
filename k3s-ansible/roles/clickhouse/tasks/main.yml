@@ -1,0 +1,57 @@
+---
+- name: ArgoCD Application für ClickHouse deployen
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/argocd-apps/clickhouse.yaml"
+    dest: /tmp/argocd-clickhouse.yaml
+    mode: "0644"
+
+- name: ArgoCD Application anwenden
+  ansible.builtin.command:
+    cmd: kubectl apply -f /tmp/argocd-clickhouse.yaml
+  register: app_result
+  changed_when: "'created' in app_result.stdout or 'configured' in app_result.stdout"
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Warten bis ArgoCD den clickhouse-Namespace angelegt hat
+  ansible.builtin.command:
+    cmd: kubectl get namespace clickhouse
+  register: clickhouse_ns
+  until: clickhouse_ns.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  failed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: ArgoCD Sync-Fehler anzeigen falls Namespace nie entstanden ist
+  ansible.builtin.command:
+    cmd: kubectl get application clickhouse -n argocd -o jsonpath='{.status.conditions}'
+  register: app_conditions
+  changed_when: false
+  when: clickhouse_ns.rc != 0
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: Abbrechen mit ArgoCD-Fehlermeldung
+  ansible.builtin.fail:
+    msg: "clickhouse-Namespace wurde nie von ArgoCD angelegt. ArgoCD-Status: {{ app_conditions.stdout }}"
+  when: clickhouse_ns.rc != 0
+
+- name: Warten bis ClickHouse bereit ist
+  ansible.builtin.command:
+    cmd: kubectl rollout status statefulset/clickhouse-shard0 -n clickhouse --timeout=300s
+  changed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
+- name: ClickHouse Zugangsdaten anzeigen
+  ansible.builtin.debug:
+    msg:
+      - "========================================"
+      - "ClickHouse HTTP  : http://{{ k3s_master_ip }}:30123"
+      - "ClickHouse TCP   : {{ k3s_master_ip }}:30900"
+      - "Benutzer         : default"
+      - "Passwort         : clickhouse"
+      - "========================================"

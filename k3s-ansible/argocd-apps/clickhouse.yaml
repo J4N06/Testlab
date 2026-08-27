@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: clickhouse
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.io
+spec:
+  project: default
+  source:
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: clickhouse
+    targetRevision: "*"
+    helm:
+      releaseName: clickhouse
+      values: |
+        shards: 1
+        replicaCount: 1
+        keeper:
+          enabled: false
+        auth:
+          username: default
+          password: clickhouse
+        persistence:
+          enabled: true
+          size: 8Gi
+        service:
+          type: NodePort
+          nodePorts:
+            http: 30123
+            tcp: 30900
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: clickhouse
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

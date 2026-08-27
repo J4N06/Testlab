@@ -265,6 +265,7 @@ ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl get pods -A"
 |------------|----------------------------|----------|----------------------|
 | ArgoCD     | https://192.168.2.21:30443 | admin    | siehe unten          |
 | Grafana    | http://192.168.2.21:30300  | admin    | admin                |
+| ClickHouse | http://192.168.2.21:30123  | default  | clickhouse           |
 
 > Browser warnt bei ArgoCD wegen self-signed Zertifikat — einfach akzeptieren.
 

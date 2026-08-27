@@ -29,3 +29,9 @@
   become: true
   roles:
     - monitoring
+
+- name: ClickHouse installieren
+  hosts: k3s_master
+  become: true
+  roles:
+    - clickhouse
