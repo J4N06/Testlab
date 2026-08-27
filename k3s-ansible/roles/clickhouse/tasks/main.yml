@@ -13,13 +13,17 @@
   environment:
     KUBECONFIG: /etc/rancher/k3s/k3s.yaml
 
-- name: Warten bis ArgoCD den clickhouse-Namespace angelegt hat
-  ansible.builtin.command:
-    cmd: kubectl get namespace clickhouse
+- name: Warten bis ArgoCD den clickhouse-Namespace angelegt hat (mit periodischem Hard-Refresh)
+  ansible.builtin.shell: |
+    for i in $(seq 1 20); do
+      if kubectl get namespace clickhouse >/dev/null 2>&1; then
+        exit 0
+      fi
+      kubectl -n argocd annotate application clickhouse argocd.argoproj.io/refresh=hard --overwrite >/dev/null 2>&1
+      sleep 30
+    done
+    exit 1
   register: clickhouse_ns
-  until: clickhouse_ns.rc == 0
-  retries: 30
-  delay: 10
   changed_when: false
   failed_when: false
   environment:
