@@ -54,3 +54,11 @@
 - name: Hostname auf Inventar-Namen setzen
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
+
+- name: Eigene minimale resolv.conf für k3s schreiben (ohne search-Domain)
+  ansible.builtin.copy:
+    dest: /etc/k3s-resolv.conf
+    mode: "0644"
+    content: |
+      nameserver 8.8.8.8
+      nameserver 8.8.4.4

@@ -17,7 +17,7 @@
       --node-ip="{{ k3s_master_ip }}" \
       --write-kubeconfig-mode=644 \
       --disable=traefik \
-      --resolv-conf=/run/systemd/resolve/resolv.conf \
+      --resolv-conf=/etc/k3s-resolv.conf \
       --node-label="node-role=master"
   args:
     executable: /bin/bash
