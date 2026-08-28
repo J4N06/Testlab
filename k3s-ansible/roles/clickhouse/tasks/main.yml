@@ -43,6 +43,17 @@
     msg: "clickhouse-Namespace wurde nie von ArgoCD angelegt. ArgoCD-Status: {{ app_conditions.stdout }}"
   when: clickhouse_ns.rc != 0
 
+- name: Warten bis das ClickHouse StatefulSet angelegt wurde
+  ansible.builtin.command:
+    cmd: kubectl get statefulset/clickhouse-shard0 -n clickhouse
+  register: clickhouse_sts
+  until: clickhouse_sts.rc == 0
+  retries: 30
+  delay: 10
+  changed_when: false
+  environment:
+    KUBECONFIG: /etc/rancher/k3s/k3s.yaml
+
 - name: Warten bis ClickHouse bereit ist
   ansible.builtin.command:
     cmd: kubectl rollout status statefulset/clickhouse-shard0 -n clickhouse --timeout=300s
