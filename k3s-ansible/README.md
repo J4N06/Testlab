@@ -296,33 +296,17 @@ Unter **Dashboards → Browse** sind vorhanden:
 
 ## SSH direkt vom eigenen Rechner (nicht über den Proxmox-Host)
 
-Standardmässig läuft `ansible-playbook`/`kubectl` auf dem Proxmox-Host selbst. Um dich von deinem eigenen Windows-Rechner aus direkt mit einer VM (z. B. dem Master) zu verbinden, brauchst du den privaten Schlüssel `k3s_key` lokal — der liegt bewusst **nicht** im Git-Repo (`.gitignore`), da es ein privater Key ist.
+Braucht den privaten Key `k3s_key` lokal (nicht im Git-Repo) und Netzwerkzugriff auf die VMs. `-o StrictHostKeyChecking=no` verhindert, dass SSH nach jedem VM-Neubau wegen des neuen Host-Keys nachfragt/abbricht.
 
-**Voraussetzung:** Dein Rechner muss das Netz der VMs (`192.168.2.0/24` bzw. das in `terraform.tfvars` konfigurierte Subnetz) erreichen können (gleiches LAN oder VPN zum Proxmox-Host).
-
-In `cmd.exe`:
 ```cmd
 if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
 scp -o StrictHostKeyChecking=no root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "%USERPROFILE%\.ssh\k3s_key"
 ssh -o StrictHostKeyChecking=no -i "%USERPROFILE%\.ssh\k3s_key" ubuntu@<master-ip>
 ```
 
-In PowerShell:
-```powershell
-if (-not (Test-Path "$env:USERPROFILE\.ssh")) { New-Item -ItemType Directory "$env:USERPROFILE\.ssh" }
-scp -o StrictHostKeyChecking=no root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "$env:USERPROFILE\.ssh\k3s_key"
-ssh -o StrictHostKeyChecking=no -i "$env:USERPROFILE\.ssh\k3s_key" ubuntu@<master-ip>
-```
+`<proxmox-ip>` = Adresse deines Proxmox-Hosts, `<master-ip>` = `master_ip` aus `terraform.tfvars`. In PowerShell: `%USERPROFILE%` → `$env:USERPROFILE`.
 
-`<proxmox-ip>` ist die Adresse, mit der du sonst auf den Proxmox-Host zugreifst; `<master-ip>` steht in `terraform.tfvars` (`master_ip`).
-
-**Wozu `-o StrictHostKeyChecking=no`:** Nach jedem VM-Neubau (`terraform destroy` + `apply`) bekommen die VMs einen neuen SSH-Host-Key. Ohne diese Option fragt SSH interaktiv nach Bestätigung ("Are you sure you want to continue connecting?") bzw. bricht mit "REMOTE HOST IDENTIFICATION HAS CHANGED" ab, wenn ein alter Eintrag noch in `known_hosts` steht — das nervt speziell in Terminals, in denen man die Interaktive Abfrage nicht beantworten kann. Alternative, falls man die Prüfung lieber nicht dauerhaft abschalten will: alten Eintrag gezielt entfernen und normal (mit Prüfung) verbinden:
-```cmd
-ssh-keygen -f "%USERPROFILE%\.ssh\known_hosts" -R <master-ip>
-ssh -i "%USERPROFILE%\.ssh\k3s_key" ubuntu@<master-ip>
-```
-
-**Alternative für dauerhaften Zugriff mit dem eigenen Key** (statt den privaten `k3s_key` zu kopieren): eigenen öffentlichen Key in `team_keys.pub` eintragen (siehe Schritt weiter oben), committen/pushen, auf dem Proxmox-Host `git pull` + `ansible-playbook site.yml` erneut laufen lassen. Danach reicht der eigene, bereits vorhandene private Key.
+Dauerhafter mit eigenem Key statt kopiertem: eigenen Public Key in `team_keys.pub` eintragen, pushen, auf Proxmox `git pull` + `ansible-playbook site.yml`.
 
 ---
 
