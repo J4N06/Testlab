@@ -303,22 +303,23 @@ Standardmässig läuft `ansible-playbook`/`kubectl` auf dem Proxmox-Host selbst.
 In `cmd.exe`:
 ```cmd
 if not exist "%USERPROFILE%\.ssh" mkdir "%USERPROFILE%\.ssh"
-scp root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "%USERPROFILE%\.ssh\k3s_key"
-ssh -i "%USERPROFILE%\.ssh\k3s_key" ubuntu@<master-ip>
+scp -o StrictHostKeyChecking=no root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "%USERPROFILE%\.ssh\k3s_key"
+ssh -o StrictHostKeyChecking=no -i "%USERPROFILE%\.ssh\k3s_key" ubuntu@<master-ip>
 ```
 
 In PowerShell:
 ```powershell
 if (-not (Test-Path "$env:USERPROFILE\.ssh")) { New-Item -ItemType Directory "$env:USERPROFILE\.ssh" }
-scp root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "$env:USERPROFILE\.ssh\k3s_key"
-ssh -i "$env:USERPROFILE\.ssh\k3s_key" ubuntu@<master-ip>
+scp -o StrictHostKeyChecking=no root@<proxmox-ip>:/root/Testlab/k3s-ansible/k3s_key "$env:USERPROFILE\.ssh\k3s_key"
+ssh -o StrictHostKeyChecking=no -i "$env:USERPROFILE\.ssh\k3s_key" ubuntu@<master-ip>
 ```
 
 `<proxmox-ip>` ist die Adresse, mit der du sonst auf den Proxmox-Host zugreifst; `<master-ip>` steht in `terraform.tfvars` (`master_ip`).
 
-**Nach jedem VM-Neubau** (`terraform destroy` + `apply`) bekommen die VMs einen neuen SSH-Host-Key — dein lokaler `known_hosts` muss dann angepasst werden, sonst kommt "REMOTE HOST IDENTIFICATION HAS CHANGED":
+**Wozu `-o StrictHostKeyChecking=no`:** Nach jedem VM-Neubau (`terraform destroy` + `apply`) bekommen die VMs einen neuen SSH-Host-Key. Ohne diese Option fragt SSH interaktiv nach Bestätigung ("Are you sure you want to continue connecting?") bzw. bricht mit "REMOTE HOST IDENTIFICATION HAS CHANGED" ab, wenn ein alter Eintrag noch in `known_hosts` steht — das nervt speziell in Terminals, in denen man die Interaktive Abfrage nicht beantworten kann. Alternative, falls man die Prüfung lieber nicht dauerhaft abschalten will: alten Eintrag gezielt entfernen und normal (mit Prüfung) verbinden:
 ```cmd
 ssh-keygen -f "%USERPROFILE%\.ssh\known_hosts" -R <master-ip>
+ssh -i "%USERPROFILE%\.ssh\k3s_key" ubuntu@<master-ip>
 ```
 
 **Alternative für dauerhaften Zugriff mit dem eigenen Key** (statt den privaten `k3s_key` zu kopieren): eigenen öffentlichen Key in `team_keys.pub` eintragen (siehe Schritt weiter oben), committen/pushen, auf dem Proxmox-Host `git pull` + `ansible-playbook site.yml` erneut laufen lassen. Danach reicht der eigene, bereits vorhandene private Key.
