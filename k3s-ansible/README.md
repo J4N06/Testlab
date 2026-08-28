@@ -263,11 +263,11 @@ ssh -i k3s_key ubuntu@192.168.2.21 "sudo kubectl get pods -A"
 
 | Service            | URL                        | Port (NodePort) | Benutzer | Passwort             |
 |--------------------|-----------------------------|------------------|----------|----------------------|
-| ArgoCD (HTTPS)      | https://192.168.2.21:30443 | 30443 (TCP)      | admin    | siehe unten          |
-| ArgoCD (HTTP)       | http://192.168.2.21:30080  | 30080 (TCP)      | admin    | siehe unten          |
-| Grafana             | http://192.168.2.21:30300  | 30300 (TCP)      | admin    | admin                |
-| ClickHouse (HTTP)   | http://192.168.2.21:30123  | 30123 (TCP)      | default  | clickhouse           |
-| ClickHouse (native) | 192.168.2.21:30900          | 30900 (TCP)      | default  | clickhouse           |
+| ArgoCD (HTTPS)      | https://192.168.40.51:30443 | 30443 (TCP)      | admin    | siehe unten          |
+| ArgoCD (HTTP)       | http://192.168.40.51:30080  | 30080 (TCP)      | admin    | siehe unten          |
+| Grafana             | http://192.168.40.51:30300  | 30300 (TCP)      | admin    | admin                |
+| ClickHouse (HTTP)   | http://192.168.40.51:30123  | 30123 (TCP)      | default  | clickhouse           |
+| ClickHouse (native) | 192.168.40.51:30900          | 30900 (TCP)      | default  | clickhouse           |
 
 Alle Ports sind auf **jedem** Cluster-Node erreichbar (Kubernetes NodePort), nicht nur auf dem Master — die Tabelle nutzt der Einfachheit halber die Master-IP.
 
