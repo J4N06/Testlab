@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://charts.bitnami.com/bitnami
-    chart: clickhouse
-    targetRevision: "*"
+    repoURL: https://github.com/J4N06/Testlab.git
+    targetRevision: HEAD
+    path: k3s-ansible/manifests/clickhouse
     helm:
       releaseName: clickhouse
       values: |

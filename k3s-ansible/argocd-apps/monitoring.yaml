@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://prometheus-community.github.io/helm-charts
-    chart: kube-prometheus-stack
-    targetRevision: "*"
+    repoURL: https://github.com/J4N06/Testlab.git
+    targetRevision: HEAD
+    path: k3s-ansible/manifests/kube-prometheus-stack
     helm:
       releaseName: kube-prometheus-stack
       values: |
